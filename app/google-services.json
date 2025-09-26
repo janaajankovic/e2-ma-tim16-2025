@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "95424202107",
+    "project_id": "myapplication-caf16",
+    "storage_bucket": "myapplication-caf16.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:95424202107:android:cec2b81e56123384c269de",
+        "android_client_info": {
+          "package_name": "com.example.habittrackerrpg"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCrC6fUrKPB5uB0Rxwt9yf8fRzBcXFMCxA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:95424202107:android:f2d6a5c565453e35c269de",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCrC6fUrKPB5uB0Rxwt9yf8fRzBcXFMCxA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
