@@ -108,6 +108,16 @@
                 app:drawableStartCompat="@drawable/ic_equipment"
                 android:drawablePadding="8dp"/>
 
+            <ImageView
+                android:id="@+id/image_view_qr_code"
+                android:layout_width="match_parent"
+                android:layout_height="144dp"
+                android:layout_marginTop="24dp"
+                android:contentDescription="QR Code za profil korisnika"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/stats_container" />
+
             <Button
                 android:id="@+id/button_logout"
                 android:layout_width="match_parent"

@@ -1,5 +1,6 @@
 package com.example.habittrackerrpg.ui.profile;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,9 +12,15 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.habittrackerrpg.MainActivity;
 import com.example.habittrackerrpg.R;
 import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.databinding.FragmentProfileBinding;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.MultiFormatWriter;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.journeyapps.barcodescanner.BarcodeEncoder;
 
 public class ProfileFragment extends Fragment {
 
@@ -36,12 +43,12 @@ public class ProfileFragment extends Fragment {
         profileViewModel.getUserProfileData().observe(getViewLifecycleOwner(), this::updateUI);
 
         binding.buttonLogout.setOnClickListener(v -> {
-            profileViewModel.logoutUser();
-            // TODO: navigate to AuthenticationActivity or Login screen
+            ((MainActivity) requireActivity()).performLogout();
         });
     }
 
     private void updateUI(User user) {
+        // Postavi username i osnovne podatke
         binding.textViewUsername.setText(user.getUsername());
         binding.textViewLevel.setText(getString(R.string.level_text, user.getLevel()));
         binding.textViewXp.setText(getString(R.string.xp_text, user.getXp()));
@@ -49,26 +56,18 @@ public class ProfileFragment extends Fragment {
         binding.textViewCoins.setText(getString(R.string.coins_text, user.getCoins()));
         binding.textViewTitle.setText(user.getTitle());
 
-        String avatarId = user.getAvatarId();
-        if (!avatarId.contains("_")) {
-            avatarId = avatarId.replace("avatar", "avatar_");
+        // Generiši QR kod
+        try {
+            MultiFormatWriter multiFormatWriter = new MultiFormatWriter();
+            BitMatrix bitMatrix = multiFormatWriter.encode(user.getUsername(), BarcodeFormat.QR_CODE, 200, 200);
+            BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
+            Bitmap bitmap = barcodeEncoder.createBitmap(bitMatrix);
+            binding.imageViewQrCode.setImageBitmap(bitmap);
+        } catch (WriterException e) {
+            e.printStackTrace();
         }
-
-        int avatarResId = getResources().getIdentifier(
-                avatarId, "drawable", requireContext().getPackageName()
-        );
-
-        if (avatarResId != 0) {
-            binding.imageViewAvatar.setImageResource(avatarResId);
-        } else {
-            binding.imageViewAvatar.setImageResource(R.drawable.avatar_1);
-            Log.e("ProfileFragment", "Avatar resource not found: " + avatarId);
-        }
-
-        binding.textViewBadges.setText(getString(R.string.badges_text, "N/А"));
-        binding.textViewEquipment.setText(getString(R.string.equipment_text, "N/А"));
     }
-    
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();

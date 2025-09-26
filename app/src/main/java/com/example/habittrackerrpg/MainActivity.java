@@ -57,4 +57,11 @@ public class MainActivity extends AppCompatActivity {
             return super.onOptionsItemSelected(item);
         }
     }
+
+    public void performLogout() {
+        authViewModel.logoutUser();
+        startActivity(new Intent(MainActivity.this, AuthenticationActivity.class));
+        finish();
+    }
+
 }

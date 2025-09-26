@@ -35,4 +35,5 @@ public class AuthenticationActivity extends AppCompatActivity implements LoginFr
                 .addToBackStack(null)
                 .commit();
     }
+
 }
