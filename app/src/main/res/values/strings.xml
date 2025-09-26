@@ -1,3 +1,18 @@
 <resources>
     <string name="app_name">HabitTrackerRPG</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="login_button_text">Login</string>
+    <string name="register_prompt">Don\'t have an account? <b>Register</b></string>
+    <string name="username_hint">Username</string>
+    <string name="confirm_password_hint">Confirm Password</string>
+    <string name="register_button_text">Register</string>
+    <string name="error_invalid_credentials">Invalid email or password.</string>
+    <string name="error_unverified_account">Please verify your account before logging in.</string>
+    <string name="error_empty_fields">Email and password are required.</string>
+    <string name="login_title">Welcome to HabitQuest</string>
+    <string name="error_password_mismatch">Passwords do not match</string>
+
 </resources>
