@@ -14,5 +14,25 @@
     <string name="error_empty_fields">Email and password are required.</string>
     <string name="login_title">Welcome to HabitQuest</string>
     <string name="error_password_mismatch">Passwords do not match</string>
+    <string name="profile_level">Level: </string>
+    <string name="profile_xp">XP: </string>
+    <string name="profile_pp">PP: </string>
+    <string name="profile_coins">Coins: </string>
+    <string name="profile_title">Title</string>
+    <string name="profile_badges">Badges: </string>
+    <string name="profile_equipment">Equipment: </string>
+    <string name="profile_logout">Logout</string>
+    <string name="badges_placeholder">Badges: Not implemented</string>
+    <string name="equipment_placeholder">Equipment: Not implemented</string>
+    <string name="level_text">Level: %1$d</string>
+    <string name="xp_text">XP: %1$d</string>
+    <string name="pp_text">PP: %1$d</string>
+    <string name="coins_text">Coins: %1$d</string>
+    <string name="badges_text">Badges: %1$s</string>
+    <string name="equipment_text">Equipment: %1$s</string>
+    <string name="logout_button_text">Logout</string>
+    <string name="placeholder_username">Username</string>
+    <string name="placeholder_title">Title</string>
+
 
 </resources>

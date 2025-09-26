@@ -1,6 +1,8 @@
 package com.example.habittrackerrpg.data.repository;
 
 import android.util.Log;
+
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.habittrackerrpg.data.model.User;
@@ -75,5 +77,27 @@ public class AuthRepository {
 
     public void logoutUser() {
         mAuth.signOut();
+    }
+
+    public LiveData<User> getCurrentUser() {
+        MutableLiveData<User> userLiveData = new MutableLiveData<>();
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+
+        if (firebaseUser != null) {
+            db.collection("users").document(firebaseUser.getUid())
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        User user = documentSnapshot.toObject(User.class);
+                        userLiveData.setValue(user);
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Greška pri dohvatanju podataka o korisniku.", e);
+                        userLiveData.setValue(null);
+                    });
+        } else {
+            userLiveData.setValue(null);
+        }
+
+        return userLiveData;
     }
 }
