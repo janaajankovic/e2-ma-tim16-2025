@@ -1,6 +1,7 @@
 package com.example.habittrackerrpg.data.repository;
 
 import android.util.Log;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import com.example.habittrackerrpg.data.model.Task;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -12,7 +13,7 @@ public class StatisticsRepository {
     private static final String TAG = "StatisticsRepository";
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-    public MutableLiveData<List<Task>> getAllTasks() {
+    public LiveData<List<Task>> getAllTasks() {
         MutableLiveData<List<Task>> tasksLiveData = new MutableLiveData<>();
 
         db.collection("tasks").get().addOnCompleteListener(task -> {
