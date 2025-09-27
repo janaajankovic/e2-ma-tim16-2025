@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
@@ -11,43 +12,59 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+
+import com.example.habittrackerrpg.databinding.LevelProgressHeaderBinding;
 import com.example.habittrackerrpg.ui.auth.AuthViewModel;
 import com.example.habittrackerrpg.ui.auth.AuthenticationActivity;
+import com.example.habittrackerrpg.ui.profile.ProfileViewModel;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
 
     private AuthViewModel authViewModel;
+    private ProfileViewModel profileViewModel;
     private NavController navController;
+    private LevelProgressHeaderBinding headerBinding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //com.example.habittrackerrpg.data.DummyDataGenerator.generate();
-
         authViewModel = new ViewModelProvider(this).get(AuthViewModel.class);
+        profileViewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
 
+        // Povezujemo Toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        // Povezujemo heder pomoću ViewBindinga
+        View headerView = findViewById(R.id.level_header);
+        headerBinding = LevelProgressHeaderBinding.bind(headerView);
+
+        // Povezujemo Navigaciju
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         navController = navHostFragment.getNavController();
-
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
 
-        // Definišemo glavne destinacije (one koje su u donjem meniju)
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.nav_tasks, R.id.nav_profile, R.id.nav_stats)
                 .build();
 
-        // Povezujemo sve automatski: Toolbar, NavController i BottomNav
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(bottomNav, navController);
+
+        // Posmatramo promene u progresu nivoa i ažuriramo heder
+        profileViewModel.getLevelProgress().observe(this, result -> {
+            if (result != null) {
+                headerBinding.textViewLevel.setText("Level " + result.level);
+                headerBinding.textViewXp.setText(result.xpForCurrentLevel + " / " + result.xpForNextLevel + " XP");
+                headerBinding.progressBarXp.setMax((int) result.xpForNextLevel);
+                headerBinding.progressBarXp.setProgress((int) result.xpForCurrentLevel);
+            }
+        });
     }
 
-    // Ova metoda je potrebna da bi strelica za nazad u Toolbar-u radila
     @Override
     public boolean onSupportNavigateUp() {
         return navController.navigateUp() || super.onSupportNavigateUp();

@@ -38,17 +38,29 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        profileViewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
+        profileViewModel = new ViewModelProvider(requireActivity()).get(ProfileViewModel.class);
 
         profileViewModel.getUserProfileData().observe(getViewLifecycleOwner(), this::updateUI);
-
-        binding.buttonLogout.setOnClickListener(v -> {
-            ((MainActivity) requireActivity()).performLogout();
+        profileViewModel.getUser().observe(getViewLifecycleOwner(), user -> {
+            if (user != null) {
+                binding.textViewUsername.setText(user.getUsername());
+                binding.textViewTitle.setText(user.getTitle());
+                binding.textViewLevel.setText("Level: " + user.getLevel());
+                binding.textViewXp.setText("XP: " + user.getXp());
+                binding.textViewPp.setText("PP: " + user.getPp());
+                binding.textViewCoins.setText("Coins: " + user.getCoins());
+            }
         });
+
+        // Privremeno dugme za testiranje dodavanja XP-a
+        binding.buttonLogout.setText("Add 50 XP (Test)");
+        binding.buttonLogout.setOnClickListener(v -> {
+            profileViewModel.addXpForTesting(50);
+        });
+
     }
 
     private void updateUI(User user) {
-        // Postavi username i osnovne podatke
         binding.textViewUsername.setText(user.getUsername());
         binding.textViewLevel.setText(getString(R.string.level_text, user.getLevel()));
         binding.textViewXp.setText(getString(R.string.xp_text, user.getXp()));
@@ -56,7 +68,6 @@ public class ProfileFragment extends Fragment {
         binding.textViewCoins.setText(getString(R.string.coins_text, user.getCoins()));
         binding.textViewTitle.setText(user.getTitle());
 
-        // Generiši QR kod
         try {
             MultiFormatWriter multiFormatWriter = new MultiFormatWriter();
             BitMatrix bitMatrix = multiFormatWriter.encode(user.getUsername(), BarcodeFormat.QR_CODE, 200, 200);
