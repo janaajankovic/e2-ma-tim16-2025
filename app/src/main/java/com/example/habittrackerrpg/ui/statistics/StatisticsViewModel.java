@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel;
 import com.example.habittrackerrpg.data.model.Task;
 import com.example.habittrackerrpg.data.model.TaskImportance;
 import com.example.habittrackerrpg.data.model.TaskStatus;
+import com.example.habittrackerrpg.data.model.User;
+import com.example.habittrackerrpg.data.repository.ProfileRepository;
 import com.example.habittrackerrpg.data.repository.StatisticsRepository;
 import com.example.habittrackerrpg.logic.*;
 import com.github.mikephil.charting.data.Entry;
@@ -16,44 +18,56 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class StatisticsViewModel extends ViewModel {
-    private StatisticsRepository statisticsRepository;
-    private LiveData<List<Task>> allTasksLiveData;
+    private final StatisticsRepository statisticsRepository;
+    private final LiveData<List<Task>> allTasksLiveData;
 
-    private CalculateLongestStreakUseCase calculateLongestStreakUseCase;
-    private CalculateActiveDaysUseCase calculateActiveDaysUseCase;
-    private CalculateDailyXpUseCase calculateDailyXpUseCase;
-    private CalculateOverallAverageDifficultyUseCase calculateOverallAverageDifficultyUseCase;
+    private final ProfileRepository profileRepository;
+    private final LiveData<User> userLiveData;
 
-    private MutableLiveData<Map<TaskStatus, Integer>> tasksByStatus = new MutableLiveData<>();
-    private MutableLiveData<Map<String, Integer>> completedTasksByCategory = new MutableLiveData<>();
-    private MutableLiveData<Integer> longestStreak = new MutableLiveData<>();
-    private MutableLiveData<Integer> activeDays = new MutableLiveData<>();
-    private MutableLiveData<List<Entry>> dailyTotalXp = new MutableLiveData<>();
-    private MutableLiveData<List<Entry>> dailyAverageXp = new MutableLiveData<>();
-    private MutableLiveData<String> averageDifficultyDescription = new MutableLiveData<>();
-    private MutableLiveData<String> specialMissions = new MutableLiveData<>();
+    private final CalculateLongestStreakUseCase calculateLongestStreakUseCase;
+    private final CalculateActiveDaysUseCase calculateActiveDaysUseCase;
+    private final CalculateDailyXpUseCase calculateDailyXpUseCase;
+    private final CalculateOverallAverageDifficultyUseCase calculateOverallAverageDifficultyUseCase;
+
+    private final MutableLiveData<Map<TaskStatus, Integer>> tasksByStatus = new MutableLiveData<>();
+    private final MutableLiveData<Map<String, Integer>> completedTasksByCategory = new MutableLiveData<>();
+    private final MutableLiveData<Integer> longestStreak = new MutableLiveData<>();
+    private final MutableLiveData<Integer> activeDays = new MutableLiveData<>();
+    private final MutableLiveData<List<Entry>> dailyTotalXp = new MutableLiveData<>();
+    private final MutableLiveData<List<Entry>> dailyAverageXp = new MutableLiveData<>();
+    private final MutableLiveData<String> averageDifficultyDescription = new MutableLiveData<>();
+    private final MutableLiveData<String> specialMissions = new MutableLiveData<>();
 
     public StatisticsViewModel() {
         this.statisticsRepository = new StatisticsRepository();
+        this.profileRepository = new ProfileRepository();
         this.calculateLongestStreakUseCase = new CalculateLongestStreakUseCase();
         this.calculateActiveDaysUseCase = new CalculateActiveDaysUseCase();
         this.calculateDailyXpUseCase = new CalculateDailyXpUseCase();
         this.calculateOverallAverageDifficultyUseCase = new CalculateOverallAverageDifficultyUseCase();
+
         this.allTasksLiveData = statisticsRepository.getAllTasks();
-        allTasksLiveData.observeForever(this::processTasks);
+        this.userLiveData = profileRepository.getUserLiveData();
+
+        userLiveData.observeForever(user -> processTasks(allTasksLiveData.getValue(), user));
+        allTasksLiveData.observeForever(tasks -> processTasks(tasks, userLiveData.getValue()));
     }
 
-    private void processTasks(List<Task> tasks) {
-        if (tasks == null) return;
+    private void processTasks(List<Task> tasks, User user) {
+        if (tasks == null || user == null) {
+            return; // Čekamo da i zadaci i korisnik budu dostupni
+        }
+
         tasksByStatus.setValue(calculateTasksByStatus(tasks));
         completedTasksByCategory.setValue(calculateCompletedTasksByCategory(tasks));
         longestStreak.setValue(calculateLongestStreakUseCase.execute(tasks));
         activeDays.setValue(calculateActiveDaysUseCase.execute(tasks));
-        averageDifficultyDescription.setValue(calculateOverallAverageDifficultyUseCase.execute(tasks).description);
+        averageDifficultyDescription.setValue(calculateOverallAverageDifficultyUseCase.execute(tasks, user.getLevel()).description);
         specialMissions.setValue(calculateSpecialMissions(tasks));
 
-        Map<LocalDate, List<Integer>> dailyXpMap = calculateDailyXpUseCase.getDailyXpMap(tasks);
-        List<LocalDate> sortedDates = new ArrayList<>(dailyXpMap.keySet());
+
+        Map<LocalDate, List<Integer>> dailyXpMap = calculateDailyXpUseCase.getDailyXpMap(tasks, user.getLevel());
+       List<LocalDate> sortedDates = new ArrayList<>(dailyXpMap.keySet());
         Collections.sort(sortedDates);
 
         List<Entry> totalXpEntries = new ArrayList<>();
@@ -65,7 +79,7 @@ public class StatisticsViewModel extends ViewModel {
             List<Integer> xpValues = dailyXpMap.get(date);
             int totalXp = 0;
             for (int xp : xpValues) totalXp += xp;
-            float averageXp = (float) totalXp / xpValues.size();
+            float averageXp = xpValues.isEmpty() ? 0 : (float) totalXp / xpValues.size();
             averageXpEntries.add(new Entry(dayIndex, averageXp));
 
             if (date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() >= sevenDaysAgoMillis) {
@@ -88,10 +102,13 @@ public class StatisticsViewModel extends ViewModel {
     private Map<TaskStatus, Integer> calculateTasksByStatus(List<Task> tasks) {
         Map<TaskStatus, Integer> statusCount = new HashMap<>();
         for (Task task : tasks) {
-            if (task.getStatus() != null) statusCount.put(task.getStatus(), statusCount.getOrDefault(task.getStatus(), 0) + 1);
+            if (task.getStatus() != null) {
+                statusCount.put(task.getStatus(), statusCount.getOrDefault(task.getStatus(), 0) + 1);
+            }
         }
         return statusCount;
     }
+
     private Map<String, Integer> calculateCompletedTasksByCategory(List<Task> tasks) {
         Map<String, Integer> categoryCount = new HashMap<>();
         for (Task task : tasks) {
@@ -101,6 +118,7 @@ public class StatisticsViewModel extends ViewModel {
         }
         return categoryCount;
     }
+
     private String calculateSpecialMissions(List<Task> tasks) {
         int started = 0, completed = 0;
         for(Task task : tasks){
