@@ -33,6 +33,9 @@
     <string name="logout_button_text">Logout</string>
     <string name="placeholder_username">Username</string>
     <string name="placeholder_title">Title</string>
-
+    <string-array name="recurrence_units">
+        <item>Dan</item>
+        <item>Nedelja</item>
+    </string-array>
 
 </resources>

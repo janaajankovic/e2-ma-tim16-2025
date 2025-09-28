@@ -52,4 +52,5 @@ dependencies {
     implementation libs.navigation.fragment
     implementation libs.navigation.ui
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    implementation("com.github.dhaval2404:colorpicker:2.3")
 }

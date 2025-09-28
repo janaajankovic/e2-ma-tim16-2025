@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <EditText
+            android:id="@+id/edit_text_task_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Naziv zadatka" />
+
+        <EditText
+            android:id="@+id/edit_text_task_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Opis (opciono)" />
+
+        <TextView
+            style="@style/TextAppearance.AppCompat.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Kategorija" />
+        <Spinner
+            android:id="@+id/spinner_category"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            style="@style/TextAppearance.AppCompat.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Težina" />
+        <RadioGroup
+            android:id="@+id/radio_group_difficulty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <RadioButton android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/radio_very_easy" android:text="Veoma lak (1 XP)" />
+            <RadioButton android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/radio_easy" android:text="Lak (3 XP)" />
+            <RadioButton android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/radio_hard" android:text="Težak (7 XP)" />
+            <RadioButton android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/radio_extreme" android:text="Ekstremno težak (20 XP)" />
+        </RadioGroup>
+
+        <TextView
+            style="@style/TextAppearance.AppCompat.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Bitnost" />
+        <RadioGroup
+            android:id="@+id/radio_group_importance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <RadioButton android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/radio_normal" android:text="Normalan (1 XP)" />
+            <RadioButton android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/radio_important" android:text="Važan (3 XP)" />
+            <RadioButton android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/radio_extremely_important" android:text="Ekstremno važan (10 XP)" />
+            <RadioButton android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/radio_special" android:text="Specijalan (100 XP)" />
+        </RadioGroup>
+
+        <CheckBox
+            android:id="@+id/checkbox_recurring"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Ponavljajući zadatak" />
+
+        <LinearLayout
+            android:id="@+id/recurring_options_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/edit_text_interval"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Interval ponavljanja (npr. 2)"
+                android:inputType="number" />
+
+            <Spinner
+                android:id="@+id/spinner_recurrence_unit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/recurrence_units"/> <Button
+            android:id="@+id/button_start_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Izaberi datum početka"/>
+
+            <Button
+                android:id="@+id/button_end_date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Izaberi datum završetka"/>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/button_save_task"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="32dp"
+            android:text="Sačuvaj zadatak" />
+    </LinearLayout>
+</ScrollView>
