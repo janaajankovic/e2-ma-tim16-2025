@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -38,6 +39,12 @@ public class TaskFragment extends Fragment {
 
         btnManageCategories.setOnClickListener(v -> {
             Navigation.findNavController(v).navigate(R.id.action_nav_tasks_to_manageCategoriesFragment);
+        });
+
+        ImageButton btnCalendarView = view.findViewById(R.id.button_calendar_view);
+
+        btnCalendarView.setOnClickListener(v -> {
+            Navigation.findNavController(v).navigate(R.id.action_nav_tasks_to_calendarViewFragment);
         });
     }
 }

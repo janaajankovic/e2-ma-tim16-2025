@@ -1,8 +1,14 @@
 package com.example.habittrackerrpg.data.model;
 
-import java.util.Date;
+import com.google.firebase.firestore.Exclude;
 
-public class Task {
+import java.util.Date;
+import java.io.Serializable;
+
+public class Task implements Serializable {
+    @Exclude
+    private String id;
+    private String userId;
     private String name;
     private String description;
     private String categoryId;
@@ -11,6 +17,8 @@ public class Task {
     private TaskImportance importance;
     private Date createdAt;
     private Date dueDate;
+    private Date completedAt;
+    private int xpValue;
 
     // Polja za ponavljajuće zadatke
     private boolean isRecurring;
@@ -124,6 +132,38 @@ public class Task {
 
     public void setRecurrenceEndDate(Date recurrenceEndDate) {
         this.recurrenceEndDate = recurrenceEndDate;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public Date getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(Date completedAt) {
+        this.completedAt = completedAt;
+    }
+
+    public int getXpValue() {
+        return xpValue;
+    }
+
+    public void setXpValue(int xpValue) {
+        this.xpValue = xpValue;
     }
 
     public int calculateXp() {

@@ -1,57 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="?android:attr/colorBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/edit_text_task_name"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Naziv zadatka" />
+            android:layout_height="wrap_content">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_text_task_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/task_name_hint" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <EditText
-            android:id="@+id/edit_text_task_description"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="Opis (opciono)" />
+            android:layout_marginTop="8dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_text_task_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/task_description_hint" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
             style="@style/TextAppearance.AppCompat.Caption"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Kategorija" />
+            android:text="@string/category_label" />
         <Spinner
             android:id="@+id/spinner_category"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"/>
 
         <TextView
             style="@style/TextAppearance.AppCompat.Caption"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Težina" />
+            android:text="@string/difficulty_label" />
         <RadioGroup
             android:id="@+id/radio_group_difficulty"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-            <RadioButton android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/radio_very_easy" android:text="Veoma lak (1 XP)" />
-            <RadioButton android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/radio_easy" android:text="Lak (3 XP)" />
-            <RadioButton android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/radio_hard" android:text="Težak (7 XP)" />
-            <RadioButton android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/radio_extreme" android:text="Ekstremno težak (20 XP)" />
+            <RadioButton android:id="@+id/radio_very_easy" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/difficulty_very_easy"/>
+            <RadioButton android:id="@+id/radio_easy" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/difficulty_easy"/>
+            <RadioButton android:id="@+id/radio_hard" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/difficulty_hard"/>
+            <RadioButton android:id="@+id/radio_extreme" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/difficulty_extreme"/>
         </RadioGroup>
 
         <TextView
@@ -59,28 +66,44 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Bitnost" />
+            android:text="@string/importance_label" />
         <RadioGroup
             android:id="@+id/radio_group_importance"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-            <RadioButton android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/radio_normal" android:text="Normalan (1 XP)" />
-            <RadioButton android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/radio_important" android:text="Važan (3 XP)" />
-            <RadioButton android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/radio_extremely_important" android:text="Ekstremno važan (10 XP)" />
-            <RadioButton android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/radio_special" android:text="Specijalan (100 XP)" />
+            <RadioButton android:id="@+id/radio_normal" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/importance_normal"/>
+            <RadioButton android:id="@+id/radio_important" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/importance_important"/>
+            <RadioButton android:id="@+id/radio_extremely_important" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/importance_extremely_important"/>
+            <RadioButton android:id="@+id/radio_special" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/importance_special"/>
         </RadioGroup>
+
+        <LinearLayout
+            android:id="@+id/one_time_task_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <Button
+                android:id="@+id/button_due_date"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="@string/due_date_button" />
+            <TextView
+                android:id="@+id/text_view_due_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/date_not_set"/>
+        </LinearLayout>
 
         <CheckBox
             android:id="@+id/checkbox_recurring"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Ponavljajući zadatak" />
+            android:text="@string/recurring_task_checkbox" />
 
         <LinearLayout
             android:id="@+id/recurring_options_container"
@@ -89,28 +112,61 @@
             android:orientation="vertical"
             android:visibility="gone">
 
-            <EditText
-                android:id="@+id/edit_text_interval"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Interval ponavljanja (npr. 2)"
-                android:inputType="number" />
+                android:hint="@string/recurrence_interval_hint">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_text_interval"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <Spinner
                 android:id="@+id/spinner_recurrence_unit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:entries="@array/recurrence_units"/> <Button
-            android:id="@+id/button_start_date"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Izaberi datum početka"/>
+                android:minHeight="48dp"
+                android:entries="@array/recurrence_units"/>
 
-            <Button
-                android:id="@+id/button_end_date"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Izaberi datum završetka"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <Button
+                    android:id="@+id/button_start_date"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="@string/start_date_button"/>
+                <TextView
+                    android:id="@+id/text_view_start_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/date_not_set"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <Button
+                    android:id="@+id/button_end_date"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="@string/end_date_button"/>
+                <TextView
+                    android:id="@+id/text_view_end_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/date_not_set"/>
+            </LinearLayout>
         </LinearLayout>
 
         <Button
@@ -119,6 +175,6 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="32dp"
-            android:text="Sačuvaj zadatak" />
+            android:text="@string/save_task" />
     </LinearLayout>
 </ScrollView>
