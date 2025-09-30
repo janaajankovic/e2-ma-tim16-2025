@@ -31,6 +31,27 @@ public class Task implements Serializable {
     public Task() {
     }
 
+    public Task(Task other) {
+        if (other == null) return;
+        this.id = other.id;
+        this.userId = other.userId;
+        this.name = other.name;
+        this.description = other.description;
+        this.categoryId = other.categoryId;
+        this.status = other.status;
+        this.difficulty = other.difficulty;
+        this.importance = other.importance;
+        this.createdAt = other.createdAt;
+        this.dueDate = other.dueDate;
+        this.completedAt = other.completedAt;
+        this.xpValue = other.xpValue;
+        this.isRecurring = other.isRecurring;
+        this.recurrenceInterval = other.recurrenceInterval;
+        this.recurrenceUnit = other.recurrenceUnit;
+        this.recurrenceStartDate = other.recurrenceStartDate;
+        this.recurrenceEndDate = other.recurrenceEndDate;
+    }
+
     public String getName() {
         return name;
     }

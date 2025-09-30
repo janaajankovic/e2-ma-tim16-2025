@@ -1,11 +1,9 @@
 package com.example.habittrackerrpg.ui.tasks;
 
-import android.content.Context;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -96,14 +94,12 @@ public class TaskListAdapter extends  ListAdapter<Task, TaskListAdapter.TaskView
         public void bind(final Task task) {
             taskName.setText(task.getName());
 
-            // Display the correct date based on task type
             if (task.isRecurring() && task.getRecurrenceStartDate() != null) {
                 taskDueDate.setText("Starts: " + dateFormat.format(task.getRecurrenceStartDate()));
             } else if (task.getDueDate() != null) {
                 taskDueDate.setText("Due: " + dateFormat.format(task.getDueDate()));
             }
 
-            // Set category color
             Category category = categoriesById.get(task.getCategoryId());
             if (category != null) {
                 categoryColorBar.setBackgroundColor(Color.parseColor(category.getColor()));
@@ -111,7 +107,6 @@ public class TaskListAdapter extends  ListAdapter<Task, TaskListAdapter.TaskView
 
             updateStatusUI(task);
 
-            // Set click listeners that report back to the Fragment
             itemView.setOnClickListener(v -> listener.onTaskClick(task));
             completeButton.setOnClickListener(v -> listener.onCompleteClick(task));
             cancelButton.setOnClickListener(v -> listener.onCancelClick(task));

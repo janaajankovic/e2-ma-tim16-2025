@@ -1,8 +1,10 @@
 package com.example.habittrackerrpg.ui.tasks;
 
+import android.util.Log;
+
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
 import com.example.habittrackerrpg.data.model.Category;
@@ -15,10 +17,10 @@ import com.example.habittrackerrpg.logic.CheckTaskQuotaUseCase;
 import com.example.habittrackerrpg.logic.Event;
 import com.example.habittrackerrpg.logic.UpdateOverdueTasksUseCase;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class TaskViewModel extends ViewModel {
 
@@ -26,37 +28,31 @@ public class TaskViewModel extends ViewModel {
     private CategoryRepository categoryRepository;
     private ProfileRepository profileRepository;
     private CheckTaskQuotaUseCase checkTaskQuotaUseCase;
+    private UpdateOverdueTasksUseCase updateOverdueTasksUseCase;
+
     private LiveData<List<Category>> categoriesLiveData;
     private MutableLiveData<Event<String>> toastMessage = new MutableLiveData<>();
-    private LiveData<List<Task>> tasksLiveData;
 
-    private LiveData<List<Task>> oneTimeTasks;
-    private LiveData<List<Task>> recurringTasks;
-    private UpdateOverdueTasksUseCase updateOverdueTasksUseCase;
+    private LiveData<List<Task>> sourceTasks;
+
+    private MediatorLiveData<List<Task>> tasksLiveData = new MediatorLiveData<>();
 
     public TaskViewModel() {
         taskRepository = new TaskRepository();
         categoryRepository = new CategoryRepository();
         profileRepository = new ProfileRepository();
         checkTaskQuotaUseCase = new CheckTaskQuotaUseCase();
-        categoriesLiveData = categoryRepository.getCategories();
         updateOverdueTasksUseCase = new UpdateOverdueTasksUseCase();
-        tasksLiveData = taskRepository.getTasks();
-        oneTimeTasks = Transformations.map(tasksLiveData, tasks -> {
-            Date today = getStartOfToday();
-            return tasks.stream()
-                    .filter(t -> !t.isRecurring() && t.getDueDate() != null && !t.getDueDate().before(today))
-                    .collect(Collectors.toList());
-        });
 
-        recurringTasks = Transformations.map(tasksLiveData, tasks -> {
-            Date today = getStartOfToday();
-            return tasks.stream()
-                    .filter(t -> t.isRecurring() && t.getRecurrenceEndDate() != null && !t.getRecurrenceEndDate().before(today))
-                    .collect(Collectors.toList());
+        categoriesLiveData = categoryRepository.getCategories();
+
+        sourceTasks = taskRepository.getTasks();
+
+        tasksLiveData.addSource(sourceTasks, tasks -> {
+            tasksLiveData.setValue(tasks);
+            Log.d("REALTIME_DEBUG", "MediatorLiveData updated from repository. Task count: " + (tasks != null ? tasks.size() : 0));
         });
     }
-
 
     private Date getStartOfToday() {
         Calendar calendar = Calendar.getInstance();
@@ -66,8 +62,10 @@ public class TaskViewModel extends ViewModel {
         calendar.set(Calendar.MILLISECOND, 0);
         return calendar.getTime();
     }
-    public LiveData<List<Task>> getOneTimeTasks() { return oneTimeTasks; }
-    public LiveData<List<Task>> getRecurringTasks() { return recurringTasks; }
+
+    public LiveData<List<Task>> getTasks() {
+        return tasksLiveData;
+    }
 
     public LiveData<List<Category>> getCategories() {
         return categoriesLiveData;
@@ -76,8 +74,8 @@ public class TaskViewModel extends ViewModel {
     public LiveData<Event<String>> getToastMessage() {
         return toastMessage;
     }
+
     public void addTask(Task task) {
-        // Basic validation
         if (task.getName() == null || task.getName().trim().isEmpty()) {
             toastMessage.setValue(new Event<>("Task name cannot be empty."));
             return;
@@ -90,14 +88,9 @@ public class TaskViewModel extends ViewModel {
             toastMessage.setValue(new Event<>("Please select difficulty and importance."));
             return;
         }
-        // TODO: Add quota check logic here using a UseCase
 
         taskRepository.addTask(task);
         toastMessage.setValue(new Event<>("Task created successfully!"));
-    }
-
-    public LiveData<List<Task>> getTasks() {
-        return tasksLiveData;
     }
 
     public void updateTaskStatus(Task task, TaskStatus newStatus) {
@@ -116,24 +109,41 @@ public class TaskViewModel extends ViewModel {
             return;
         }
 
-        task.setStatus(newStatus);
+        List<Task> currentTasks = tasksLiveData.getValue();
+        if (currentTasks == null) {
+            currentTasks = new ArrayList<>();
+        }
 
-        task.setStatus(newStatus);
+        List<Task> updatedTasks = new ArrayList<>();
+        for (Task t : currentTasks) {
+            if (t.getId() != null && t.getId().equals(task.getId())) {
+                Task updatedTask = new Task(t);
+                updatedTask.setStatus(newStatus);
+                updatedTasks.add(updatedTask);
+            } else {
+                updatedTasks.add(t);
+            }
+        }
+
+        tasksLiveData.setValue(updatedTasks);
+
+        Task taskToUpdate = new Task(task);
+        taskToUpdate.setStatus(newStatus);
 
         if (newStatus == TaskStatus.COMPLETED) {
             Date todayStart = getStartOfToday();
 
             taskRepository.getCompletedTasksSince(todayStart, completedToday -> {
-                if (checkTaskQuotaUseCase.execute(task, completedToday)) {
-                    profileRepository.addXp(task.getXpValue());
-                    toastMessage.postValue(new Event<>("Task completed! +" + task.getXpValue() + " XP"));
+                if (checkTaskQuotaUseCase.execute(taskToUpdate, completedToday)) {
+                    profileRepository.addXp(taskToUpdate.getXpValue());
+                    toastMessage.postValue(new Event<>("Task completed! +" + taskToUpdate.getXpValue() + " XP"));
                 } else {
                     toastMessage.postValue(new Event<>("Task completed! XP quota for this type reached for today."));
                 }
-                taskRepository.updateTask(task);
+                taskRepository.updateTask(taskToUpdate);
             });
         } else {
-            taskRepository.updateTask(task);
+            taskRepository.updateTask(taskToUpdate);
         }
     }
 }

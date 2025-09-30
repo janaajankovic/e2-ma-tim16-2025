@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -19,7 +18,10 @@ import com.example.habittrackerrpg.data.model.TaskStatus;
 import com.example.habittrackerrpg.databinding.FragmentTaskBinding;
 import com.google.android.material.tabs.TabLayout;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -28,7 +30,6 @@ public class TaskFragment extends Fragment implements TaskListAdapter.OnTaskActi
     private FragmentTaskBinding binding;
     private TaskViewModel taskViewModel;
     private TaskListAdapter adapter;
-    private Map<String, Category> categoriesById = new HashMap<>();
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -44,16 +45,15 @@ public class TaskFragment extends Fragment implements TaskListAdapter.OnTaskActi
         setupRecyclerView();
         setupTabs();
         setupNavigationButtons();
-        setupObservers();
 
-        taskViewModel.getCategories().observe(getViewLifecycleOwner(), categories -> {
-            if (categories != null) {
-                categories.forEach(c -> categoriesById.put(c.getId(), c));
-                observeTasks(binding.tabLayoutTasks.getSelectedTabPosition());
-            }
-        });
+        setupObservers();
     }
 
+    private void setupRecyclerView() {
+        binding.recyclerViewTasks.setLayoutManager(new LinearLayoutManager(getContext()));
+        adapter = new TaskListAdapter(new HashMap<>(), this);
+        binding.recyclerViewTasks.setAdapter(adapter);
+    }
 
     private void setupObservers() {
         taskViewModel.getCategories().observe(getViewLifecycleOwner(), categories -> {
@@ -65,38 +65,50 @@ public class TaskFragment extends Fragment implements TaskListAdapter.OnTaskActi
             }
         });
 
-        observeTasks(binding.tabLayoutTasks.getSelectedTabPosition());
-    }
-    private void setupRecyclerView() {
-        binding.recyclerViewTasks.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new TaskListAdapter(new HashMap<>(), this);
-        binding.recyclerViewTasks.setAdapter(adapter);
+        taskViewModel.getTasks().observe(getViewLifecycleOwner(), allTasks -> {
+            if (allTasks != null) {
+                filterAndSubmitTasks(allTasks);
+            }
+        });
     }
 
     private void setupTabs() {
         binding.tabLayoutTasks.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                observeTasks(tab.getPosition());
+                if (taskViewModel.getTasks().getValue() != null) {
+                    filterAndSubmitTasks(taskViewModel.getTasks().getValue());
+                }
             }
             @Override public void onTabUnselected(TabLayout.Tab tab) {}
             @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
     }
 
-    private void observeTasks(int tabPosition) {
-        taskViewModel.getOneTimeTasks().removeObservers(getViewLifecycleOwner());
-        taskViewModel.getRecurringTasks().removeObservers(getViewLifecycleOwner());
+    private void filterAndSubmitTasks(List<Task> allTasks) {
+        int selectedTabPosition = binding.tabLayoutTasks.getSelectedTabPosition();
+        List<Task> filteredTasks;
+        Date today = getStartOfToday();
 
-        if (tabPosition == 0) {
-            taskViewModel.getOneTimeTasks().observe(getViewLifecycleOwner(), tasks -> {
-                adapter.submitList(tasks);
-            });
+        if (selectedTabPosition == 0) {
+            filteredTasks = allTasks.stream()
+                    .filter(t -> !t.isRecurring() && t.getDueDate() != null && !t.getDueDate().before(today))
+                    .collect(Collectors.toList());
         } else {
-            taskViewModel.getRecurringTasks().observe(getViewLifecycleOwner(), tasks -> {
-                adapter.submitList(tasks);
-            });
+            filteredTasks = allTasks.stream()
+                    .filter(t -> t.isRecurring() && t.getRecurrenceEndDate() != null && !t.getRecurrenceEndDate().before(today))
+                    .collect(Collectors.toList());
         }
+        adapter.submitList(filteredTasks);
+    }
+
+    private Date getStartOfToday() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
     }
 
     private void setupNavigationButtons() {
@@ -121,16 +133,17 @@ public class TaskFragment extends Fragment implements TaskListAdapter.OnTaskActi
     }
 
     @Override
+    public void onPauseClick(Task task) {
+        TaskStatus newStatus = (task.getStatus() == TaskStatus.PAUSED) ? TaskStatus.ACTIVE : TaskStatus.PAUSED;
+        taskViewModel.updateTaskStatus(task, newStatus);
+    }
+
+
+    @Override
     public void onTaskClick(Task task) {
         Bundle bundle = new Bundle();
         bundle.putSerializable("task", task);
         NavHostFragment.findNavController(this).navigate(R.id.action_nav_tasks_to_taskDetailFragment, bundle);
-    }
-
-    @Override
-    public void onPauseClick(Task task) {
-        TaskStatus newStatus = (task.getStatus() == TaskStatus.PAUSED) ? TaskStatus.ACTIVE : TaskStatus.PAUSED;
-        taskViewModel.updateTaskStatus(task, newStatus);
     }
 
     @Override

@@ -16,11 +16,14 @@ import java.util.Date;
 import java.util.List;
 
 import com.example.habittrackerrpg.logic.CalculateTaskXpUseCase;
+import com.google.firebase.firestore.ListenerRegistration;
 
 public class TaskRepository {
     private static final String TAG = "TaskRepository";
     private FirebaseAuth mAuth = FirebaseAuth.getInstance();
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final MutableLiveData<List<Task>> tasksLiveData = new MutableLiveData<>();
+    private ListenerRegistration tasksListener;
     private ProfileRepository profileRepository = new ProfileRepository();
 
     public interface TasksCallback {
@@ -73,32 +76,38 @@ public class TaskRepository {
     }
 
     public LiveData<List<Task>> getTasks() {
-        MutableLiveData<List<Task>> tasksLiveData = new MutableLiveData<>();
-        if (mAuth.getCurrentUser() == null) {
-            return tasksLiveData;
-        }
-        String uid = mAuth.getCurrentUser().getUid();
-
-        db.collection("users").document(uid).collection("tasks")
-                .addSnapshotListener((snapshots, e) -> {
-                    if (e != null) {
-                        Log.w(TAG, "Listen failed.", e);
-                        return;
-                    }
-                    if (snapshots != null) {
-                        List<Task> tasks = new ArrayList<>();
-                        for (DocumentSnapshot doc : snapshots.getDocuments()) {
-                            Task task = doc.toObject(Task.class);
-                            if (task != null) {
-                                task.setId(doc.getId());
-                                tasks.add(task);
-                            }
+        if (mAuth.getCurrentUser() != null && tasksListener == null) {
+            String uid = mAuth.getCurrentUser().getUid();
+            tasksListener = db.collection("users").document(uid).collection("tasks")
+                    .addSnapshotListener((snapshots, e) -> {
+                        if (e != null) {
+                            Log.w(TAG, "Listen failed.", e);
+                            return;
                         }
-                        tasksLiveData.setValue(tasks);
-                    }
-                });
+                        if (snapshots != null) {
+                            List<Task> tasks = new ArrayList<>();
+                            for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                                Task task = doc.toObject(Task.class);
+                                if (task != null) {
+                                    task.setId(doc.getId());
+                                    tasks.add(task);
+                                }
+                            }
+                            tasksLiveData.setValue(tasks);
+                            Log.d("REALTIME_DEBUG", "STEP 1 SUCCESS: Firestore listener fired. Task count: " + tasks.size());
+                        }
+                    });
+        }
         return tasksLiveData;
     }
+
+    public void cleanupListeners() {
+        if (tasksListener != null) {
+            tasksListener.remove();
+            tasksListener = null;
+        }
+    }
+
 
     public void updateTask(Task task) {
         if (mAuth.getCurrentUser() == null || task.getId() == null) return;
