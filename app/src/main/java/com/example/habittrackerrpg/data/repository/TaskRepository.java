@@ -23,6 +23,10 @@ public class TaskRepository {
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private ProfileRepository profileRepository = new ProfileRepository();
 
+    public interface TasksCallback {
+        void onCallback(List<Task> tasks);
+    }
+
     public void addTask(Task task) {
         if (mAuth.getCurrentUser() == null) {
             Log.w(TAG, "User not logged in, cannot add task.");
@@ -48,10 +52,10 @@ public class TaskRepository {
         });
     }
 
-    public LiveData<List<Task>> getCompletedTasksSince(Date startDate) {
-        MutableLiveData<List<Task>> completedTasksLiveData = new MutableLiveData<>();
+    public void getCompletedTasksSince(Date startDate, TasksCallback callback) {
         if (mAuth.getCurrentUser() == null) {
-            return completedTasksLiveData;
+            callback.onCallback(new ArrayList<>());
+            return;
         }
         String uid = mAuth.getCurrentUser().getUid();
 
@@ -60,9 +64,12 @@ public class TaskRepository {
                 .whereGreaterThanOrEqualTo("completedAt", startDate)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    completedTasksLiveData.setValue(queryDocumentSnapshots.toObjects(Task.class));
+                    callback.onCallback(queryDocumentSnapshots.toObjects(Task.class));
+                })
+                .addOnFailureListener(e -> {
+                    Log.w(TAG, "Error getting completed tasks", e);
+                    callback.onCallback(new ArrayList<>());
                 });
-        return completedTasksLiveData;
     }
 
     public LiveData<List<Task>> getTasks() {

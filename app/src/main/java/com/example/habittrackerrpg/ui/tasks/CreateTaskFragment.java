@@ -58,10 +58,13 @@ public class CreateTaskFragment extends Fragment {
 
         binding.buttonSaveTask.setOnClickListener(v -> saveTask());
 
-        taskViewModel.getToastMessage().observe(getViewLifecycleOwner(), message -> {
-            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-            if (message.equals("Task created successfully!")) {
-                NavHostFragment.findNavController(this).popBackStack();
+        taskViewModel.getToastMessage().observe(getViewLifecycleOwner(), event -> {
+            String message = event.getContentIfNotHandled();
+            if (message != null) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                if (message.equals("Task created successfully!")) {
+                    NavHostFragment.findNavController(this).popBackStack();
+                }
             }
         });
     }

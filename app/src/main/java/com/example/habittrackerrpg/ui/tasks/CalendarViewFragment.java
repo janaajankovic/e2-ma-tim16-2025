@@ -142,6 +142,13 @@ public class CalendarViewFragment extends Fragment implements DayTasksBottomShee
         });
     }
 
+    @Override
+    public void onTaskSelected(Task task) {
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("task", task);
+        NavHostFragment.findNavController(this).navigate(R.id.action_calendarViewFragment_to_taskDetailFragment, bundle);
+    }
+
     private void onDayClicked(CalendarDay day) {
             LocalDate clickedDate = day.getDate();
             if (!clickedDate.equals(selectedDate)) {
@@ -170,13 +177,6 @@ public class CalendarViewFragment extends Fragment implements DayTasksBottomShee
 
             }
 
-    }
-
-    @Override
-    public void onTaskSelected(Task task) {
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("task", task);
-        NavHostFragment.findNavController(this).navigate(R.id.action_calendarViewFragment_to_taskDetailFragment, bundle);
     }
 
     private static class DayViewContainer extends ViewContainer {

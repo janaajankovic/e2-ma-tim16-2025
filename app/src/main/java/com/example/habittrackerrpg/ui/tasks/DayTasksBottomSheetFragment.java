@@ -6,10 +6,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
-
 import com.example.habittrackerrpg.data.model.Category;
 import com.example.habittrackerrpg.data.model.Task;
+import com.example.habittrackerrpg.data.model.TaskStatus;
 import com.example.habittrackerrpg.databinding.BottomSheetDayTasksBinding;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import java.io.Serializable;
@@ -17,25 +18,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DayTasksBottomSheetFragment extends BottomSheetDialogFragment implements DayTasksAdapter.OnTaskClickListener  {
+public class DayTasksBottomSheetFragment extends BottomSheetDialogFragment implements DayTasksAdapter.OnTaskActionListener {
 
     private BottomSheetDayTasksBinding binding;
+    private TaskViewModel taskViewModel;
     private List<Task> tasks;
-
     private Map<String, Category> categoriesById;
+
     private static final String ARG_TASKS = "tasks";
     private static final String ARG_DATE_TITLE = "date_title";
 
     public interface TaskSelectionListener {
         void onTaskSelected(Task task);
     }
-
     private TaskSelectionListener selectionListener;
-
     public void setTaskSelectionListener(TaskSelectionListener listener) {
         this.selectionListener = listener;
     }
-
     public static DayTasksBottomSheetFragment newInstance(List<Task> tasks, String dateTitle, HashMap<String, Category> categories) {
         DayTasksBottomSheetFragment fragment = new DayTasksBottomSheetFragment();
         Bundle args = new Bundle();
@@ -65,12 +64,28 @@ public class DayTasksBottomSheetFragment extends BottomSheetDialogFragment imple
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
+        taskViewModel = new ViewModelProvider(requireActivity()).get(TaskViewModel.class);
         binding.textBottomSheetTitle.setText(getArguments().getString(ARG_DATE_TITLE));
 
         DayTasksAdapter adapter = new DayTasksAdapter(tasks, categoriesById, this);
         binding.recyclerViewDayTasks.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.recyclerViewDayTasks.setAdapter(adapter);
+    }
+
+    @Override
+    public void onCompleteClick(Task task) {
+        taskViewModel.updateTaskStatus(task, TaskStatus.COMPLETED);
+    }
+
+    @Override
+    public void onCancelClick(Task task) {
+        taskViewModel.updateTaskStatus(task, TaskStatus.CANCELLED);
+    }
+
+    @Override
+    public void onPauseClick(Task task) {
+        TaskStatus newStatus = (task.getStatus() == TaskStatus.PAUSED) ? TaskStatus.ACTIVE : TaskStatus.PAUSED;
+        taskViewModel.updateTaskStatus(task, newStatus);
     }
 
     @Override

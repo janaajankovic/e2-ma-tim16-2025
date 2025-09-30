@@ -22,6 +22,9 @@
             android:id="@+id/action_nav_tasks_to_calendarViewFragment"
             app:destination="@id/calendarViewFragment" />
 
+        <action
+            android:id="@+id/action_nav_tasks_to_taskDetailFragment"
+            app:destination="@id/taskDetailFragment" />
     </fragment>
 
     <fragment

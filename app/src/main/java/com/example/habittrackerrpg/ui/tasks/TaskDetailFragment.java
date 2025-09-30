@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+
+import com.example.habittrackerrpg.R;
 import com.example.habittrackerrpg.data.model.Category;
 import com.example.habittrackerrpg.data.model.Task;
 import com.example.habittrackerrpg.data.model.TaskStatus;
@@ -47,10 +49,9 @@ public class TaskDetailFragment extends Fragment {
 
         if (currentTask != null) {
             setupListeners();
-            // Observe categories to get the name
             taskViewModel.getCategories().observe(getViewLifecycleOwner(), categories -> {
                 if (categories != null) {
-                    populateUI(); // Populate UI after we have the category data
+                    populateUI();
                 }
             });
         }
@@ -104,6 +105,22 @@ public class TaskDetailFragment extends Fragment {
 
     private void updateStatusUI(TaskStatus status) {
         binding.chipTaskStatus.setText(status.name());
+        switch (status) {
+            case COMPLETED:
+                binding.chipTaskStatus.setChipBackgroundColorResource(R.color.action_color_done);
+                break;
+            case CANCELLED:
+                binding.chipTaskStatus.setChipBackgroundColorResource(R.color.icon_tint_default);
+                break;
+            case PAUSED:
+                binding.chipTaskStatus.setChipBackgroundColorResource(R.color.icon_color_on_action);
+                break;
+            case UNCOMPLETED:
+                binding.chipTaskStatus.setChipBackgroundColorResource(R.color.action_color_cancel);
+            default:
+                binding.chipTaskStatus.setChipBackgroundColorResource(R.color.action_color_pause);
+                break;
+        }
         boolean isActionable = status == TaskStatus.ACTIVE || status == TaskStatus.PAUSED;
         binding.actionsContainer.setVisibility(isActionable ? View.VISIBLE : View.GONE);
     }

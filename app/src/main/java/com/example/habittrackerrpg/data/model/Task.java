@@ -4,6 +4,7 @@ import com.google.firebase.firestore.Exclude;
 
 import java.util.Date;
 import java.io.Serializable;
+import java.util.Objects;
 
 public class Task implements Serializable {
     @Exclude
@@ -184,5 +185,21 @@ public class Task implements Serializable {
         }
 
         return xpFromDifficulty + xpFromImportance;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Task task = (Task) o;
+        return Objects.equals(id, task.id) &&
+                Objects.equals(name, task.name) &&
+                Objects.equals(status, task.status) &&
+                Objects.equals(dueDate, task.dueDate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, status, dueDate);
     }
 }
