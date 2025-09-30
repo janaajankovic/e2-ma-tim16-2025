@@ -6,18 +6,72 @@
     app:startDestination="@id/nav_tasks">
 
     <fragment
+        android:id="@+id/nav_tasks"
+        android:name="com.example.habittrackerrpg.ui.tasks.TaskFragment"
+        android:label="Tasks"
+        tools:layout="@layout/fragment_task" >
+
+        <action
+            android:id="@+id/action_nav_tasks_to_createTaskFragment"
+            app:destination="@id/createTaskFragment" />
+        <action
+            android:id="@+id/action_nav_tasks_to_manageCategoriesFragment"
+            app:destination="@id/manageCategoriesFragment" />
+
+        <action
+            android:id="@+id/action_nav_tasks_to_calendarViewFragment"
+            app:destination="@id/calendarViewFragment" />
+
+        <action
+            android:id="@+id/action_nav_tasks_to_taskDetailFragment"
+            app:destination="@id/taskDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/calendarViewFragment"
+        android:name="com.example.habittrackerrpg.ui.tasks.CalendarViewFragment"
+        android:label="Calendar View"
+        tools:layout="@layout/fragment_calendar_view">
+
+        <action
+            android:id="@+id/action_calendarViewFragment_to_taskDetailFragment"
+            app:destination="@id/taskDetailFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/taskDetailFragment"
+        android:name="com.example.habittrackerrpg.ui.tasks.TaskDetailFragment"
+        android:label="Task Details"
+        tools:layout="@layout/fragment_task_detail">
+        <argument
+            android:name="task"
+            app:argType="com.example.habittrackerrpg.data.model.Task" />
+    </fragment>
+
+    <fragment
         android:id="@+id/nav_profile"
         android:name="com.example.habittrackerrpg.ui.profile.ProfileFragment"
         android:label="Profile"
         tools:layout="@layout/fragment_profile" />
-    <fragment
-        android:id="@+id/nav_tasks"
-        android:name="com.example.habittrackerrpg.ui.tasks.TaskFragment"
-        android:label="Tasks"
-        tools:layout="@layout/fragment_task" />
+
     <fragment
         android:id="@+id/nav_stats"
         android:name="com.example.habittrackerrpg.ui.statistics.StatisticsFragment"
         android:label="Statistics"
         tools:layout="@layout/fragment_statistics" />
+
+    <fragment
+        android:id="@+id/createTaskFragment"
+        android:name="com.example.habittrackerrpg.ui.tasks.CreateTaskFragment"
+        android:label="Create Task"
+        tools:layout="@layout/fragment_create_task" />
+
+    <fragment
+        android:id="@+id/manageCategoriesFragment"
+        android:name="com.example.habittrackerrpg.ui.categories.ManageCategoriesFragment"
+        android:label="Manage Categories"
+        tools:layout="@layout/fragment_manage_categories" />
+
+
 </navigation>

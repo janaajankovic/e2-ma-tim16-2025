@@ -1,14 +1,26 @@
 package com.example.habittrackerrpg.data.model;
 
+import com.google.firebase.firestore.Exclude;
+
 public class Category {
+    private String id;
     private String name;
-    private String color; // Boja će biti heksadecimalni kod
+    private String color;
 
     public Category() {}
 
     public Category(String name, String color) {
         this.name = name;
         this.color = color;
+    }
+
+    @Exclude
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getName() { return name; }

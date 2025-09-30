@@ -33,6 +33,30 @@
     <string name="logout_button_text">Logout</string>
     <string name="placeholder_username">Username</string>
     <string name="placeholder_title">Title</string>
+    <string name="task_name_hint">Task Name</string>
+    <string name="task_description_hint">Description (optional)</string>
+    <string name="category_label">Category</string>
+    <string name="difficulty_label">Difficulty</string>
+    <string name="difficulty_very_easy">Very Easy (1 XP)</string>
+    <string name="difficulty_easy">Easy (3 XP)</string>
+    <string name="difficulty_hard">Hard (7 XP)</string>
+    <string name="difficulty_extreme">Extreme (20 XP)</string>
+    <string name="importance_label">Importance</string>
+    <string name="importance_normal">Normal (1 XP)</string>
+    <string name="importance_important">Important (3 XP)</string>
+    <string name="importance_extremely_important">Extremely Important (10 XP)</string>
+    <string name="importance_special">Special (100 XP)</string>
+    <string name="recurring_task_checkbox">Recurring Task</string>
+    <string name="recurrence_interval_hint">Recurrence interval (e.g., 2)</string>
+    <string name="due_date_button">Set Due Date</string>
+    <string name="start_date_button">Set Start Date</string>
+    <string name="end_date_button">Set End Date</string>
+    <string name="date_not_set">not set</string>
+    <string name="save_task">Save Task</string>
+    <string-array name="recurrence_units">
+        <item>Day(s)</item>
+        <item>Week(s)</item>
+    </string-array>
 
 
 </resources>

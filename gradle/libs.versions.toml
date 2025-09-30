@@ -27,6 +27,7 @@ firebase-appcheck-debug = { group = "com.google.firebase", name = "firebase-appc
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
 navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigation" }
 navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version.ref = "navigation" }
+colorpicker = { group = "com.github.dhaval2404", name = "colorpicker", version = "2.3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
