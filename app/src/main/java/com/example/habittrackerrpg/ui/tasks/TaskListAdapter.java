@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.habittrackerrpg.R;
 import com.example.habittrackerrpg.data.model.Category;
 import com.example.habittrackerrpg.data.model.Task;
-import com.example.habittrackerrpg.data.model.TaskStatus;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import java.text.SimpleDateFormat;
@@ -151,7 +150,7 @@ public class TaskListAdapter extends  ListAdapter<Task, TaskListAdapter.TaskView
                 case PAUSED:
                     actionsContainer.setVisibility(View.VISIBLE);
                     activateButton.setVisibility(View.VISIBLE);
-                    cancelButton.setVisibility(View.VISIBLE);
+                    cancelButton.setVisibility(View.GONE);
                     completeButton.setVisibility(View.GONE);
                     pauseButton.setVisibility(View.GONE);
                     break;

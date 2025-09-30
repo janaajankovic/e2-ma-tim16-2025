@@ -92,11 +92,11 @@ public class TaskFragment extends Fragment implements TaskListAdapter.OnTaskActi
 
         if (selectedTabPosition == 0) {
             filteredTasks = allTasks.stream()
-                    .filter(t -> !t.isRecurring() && t.getDueDate() != null && !t.getDueDate().before(today))
+                    .filter(t -> !t.isRecurring() && t.getDueDate() != null && !t.getDueDate().before(today) && !t.getStatus().equals(TaskStatus.CANCELLED))
                     .collect(Collectors.toList());
         } else {
             filteredTasks = allTasks.stream()
-                    .filter(t -> t.isRecurring() && t.getRecurrenceEndDate() != null && !t.getRecurrenceEndDate().before(today))
+                    .filter(t -> t.isRecurring() && t.getRecurrenceEndDate() != null && !t.getRecurrenceEndDate().before(today) && !t.getStatus().equals(TaskStatus.CANCELLED))
                     .collect(Collectors.toList());
         }
         adapter.submitList(filteredTasks);

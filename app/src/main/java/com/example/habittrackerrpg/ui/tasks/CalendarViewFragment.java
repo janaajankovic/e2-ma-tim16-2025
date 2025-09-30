@@ -2,7 +2,6 @@ package com.example.habittrackerrpg.ui.tasks;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,7 +32,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class CalendarViewFragment extends Fragment implements DayTasksBottomSheetFragment.TaskSelectionListener  {
+public class CalendarViewFragment extends Fragment implements DayTasksBottomSheetFragment.TaskSelectionListener {
 
     private TaskViewModel taskViewModel;
     private CalendarView calendarView;
@@ -71,13 +70,11 @@ public class CalendarViewFragment extends Fragment implements DayTasksBottomShee
 
         taskViewModel.getTasks().observe(getViewLifecycleOwner(), tasks -> {
             if (tasks != null) {
-                Log.d("HabitTrackerDebug", "FRAGMENT-OBSERVER: Received " + tasks.size() + " tasks from ViewModel.");
-
                 tasksByDate.clear();
 
                 YearMonth currentMonth = YearMonth.now();
-                LocalDate rangeStart = currentMonth.minusMonths(1).atDay(1);
-                LocalDate rangeEnd = currentMonth.plusMonths(1).atEndOfMonth();
+                LocalDate rangeStart = currentMonth.minusMonths(12).atDay(1);
+                LocalDate rangeEnd = currentMonth.plusMonths(12).atEndOfMonth();
 
                 for (Task task : tasks) {
                     List<LocalDate> occurrences = generateOccurrencesUseCase.execute(task, rangeStart, rangeEnd);
@@ -85,12 +82,9 @@ public class CalendarViewFragment extends Fragment implements DayTasksBottomShee
                         tasksByDate.computeIfAbsent(date, k -> new ArrayList<>()).add(task);
                     }
                 }
-
-                Log.d("HabitTrackerDebug", "FRAGMENT-PROCESSING: Grouped tasks into " + tasksByDate.size() + " dates.");
                 calendarView.notifyCalendarChanged();
             }
         });
-
     }
 
     private void setupCalendar() {
@@ -103,9 +97,7 @@ public class CalendarViewFragment extends Fragment implements DayTasksBottomShee
             @Override
             public DayViewContainer create(@NonNull View view) {
                 DayViewContainer container = new DayViewContainer(view);
-                container.getView().setOnClickListener(v -> {
-                    onDayClicked(container.day);
-                });
+                container.getView().setOnClickListener(v -> onDayClicked(container.day));
                 return container;
             }
 
@@ -117,19 +109,22 @@ public class CalendarViewFragment extends Fragment implements DayTasksBottomShee
 
                 List<Task> dayTasks = tasksByDate.get(day.getDate());
                 if (dayTasks != null && !dayTasks.isEmpty()) {
-                    for (int i = 0; i < Math.min(dayTasks.size(), 3); i++) {
-                        Task task = dayTasks.get(i);
-                        Category category = categoriesById.get(task.getCategoryId());
-                        if (category != null) {
-                            View dot = new View(getContext());
-                            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(15, 15);
-                            params.setMargins(4, 0, 4, 0);
-                            dot.setLayoutParams(params);
-                            dot.setBackgroundResource(R.drawable.color_circle);
-                            dot.getBackground().mutate().setTint(Color.parseColor(category.getColor()));
-                            container.dotsContainer.addView(dot);
-                        }
-                    }
+                    dayTasks.stream()
+                            .map(Task::getCategoryId)
+                            .distinct()
+                            .limit(4)
+                            .forEach(categoryId -> {
+                                Category category = categoriesById.get(categoryId);
+                                if (category != null) {
+                                    View dot = new View(getContext());
+                                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(15, 15);
+                                    params.setMargins(4, 0, 4, 0);
+                                    dot.setLayoutParams(params);
+                                    dot.setBackgroundResource(R.drawable.color_circle);
+                                    dot.getBackground().mutate().setTint(Color.parseColor(category.getColor()));
+                                    container.dotsContainer.addView(dot);
+                                }
+                            });
                 }
             }
         });
@@ -150,33 +145,21 @@ public class CalendarViewFragment extends Fragment implements DayTasksBottomShee
     }
 
     private void onDayClicked(CalendarDay day) {
-            LocalDate clickedDate = day.getDate();
-            if (!clickedDate.equals(selectedDate)) {
-                LocalDate oldDate = selectedDate;
-                selectedDate = clickedDate;
-                calendarView.notifyDateChanged(clickedDate);
-                if (oldDate != null) {
-                    calendarView.notifyDateChanged(oldDate);
-                }
-
-
-            List<Task> tasksForDate = tasksByDate.getOrDefault(clickedDate, new ArrayList<>());
-            String title = "Tasks for: " + clickedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy"));
-
-            List<Category> categoryList = taskViewModel.getCategories().getValue();
-            HashMap<String, Category> categoriesAsMap = new HashMap<>();
-            if (categoryList != null) {
-                for (Category cat : categoryList) {
-                    categoriesAsMap.put(cat.getId(), cat);
-                }
+        LocalDate clickedDate = day.getDate();
+        if (!clickedDate.equals(selectedDate)) {
+            LocalDate oldDate = selectedDate;
+            selectedDate = clickedDate;
+            calendarView.notifyDateChanged(clickedDate);
+            if (oldDate != null) {
+                calendarView.notifyDateChanged(oldDate);
             }
+        }
 
-                DayTasksBottomSheetFragment bottomSheet = DayTasksBottomSheetFragment.newInstance(tasksForDate, title, categoriesAsMap);
-                bottomSheet.setTaskSelectionListener(this);
-                bottomSheet.show(getParentFragmentManager(), bottomSheet.getTag());
+        String title = "Tasks for: " + clickedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy"));
 
-            }
-
+        DayTasksBottomSheetFragment bottomSheet = DayTasksBottomSheetFragment.newInstance(clickedDate, title);
+        bottomSheet.setTaskSelectionListener(this);
+        bottomSheet.show(getParentFragmentManager(), bottomSheet.getTag());
     }
 
     private static class DayViewContainer extends ViewContainer {

@@ -12,35 +12,41 @@ import com.example.habittrackerrpg.data.model.Category;
 import com.example.habittrackerrpg.data.model.Task;
 import com.example.habittrackerrpg.data.model.TaskStatus;
 import com.example.habittrackerrpg.databinding.BottomSheetDayTasksBinding;
+import com.example.habittrackerrpg.logic.GenerateTaskOccurrencesUseCase;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
-import java.io.Serializable;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DayTasksBottomSheetFragment extends BottomSheetDialogFragment implements DayTasksAdapter.OnTaskActionListener {
 
     private BottomSheetDayTasksBinding binding;
     private TaskViewModel taskViewModel;
-    private List<Task> tasks;
-    private Map<String, Category> categoriesById;
+    private DayTasksAdapter adapter;
+    private LocalDate selectedDate;
+    private GenerateTaskOccurrencesUseCase generateOccurrencesUseCase;
 
-    private static final String ARG_TASKS = "tasks";
+    private static final String ARG_DATE = "date";
     private static final String ARG_DATE_TITLE = "date_title";
 
     public interface TaskSelectionListener {
         void onTaskSelected(Task task);
     }
     private TaskSelectionListener selectionListener;
+
     public void setTaskSelectionListener(TaskSelectionListener listener) {
         this.selectionListener = listener;
     }
-    public static DayTasksBottomSheetFragment newInstance(List<Task> tasks, String dateTitle, HashMap<String, Category> categories) {
+
+    public static DayTasksBottomSheetFragment newInstance(LocalDate date, String dateTitle) {
         DayTasksBottomSheetFragment fragment = new DayTasksBottomSheetFragment();
         Bundle args = new Bundle();
-        args.putSerializable(ARG_TASKS, (Serializable) tasks);
+        args.putSerializable(ARG_DATE, date);
         args.putString(ARG_DATE_TITLE, dateTitle);
-        args.putSerializable("categories", categories);
         fragment.setArguments(args);
         return fragment;
     }
@@ -49,9 +55,9 @@ public class DayTasksBottomSheetFragment extends BottomSheetDialogFragment imple
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            tasks = (List<Task>) getArguments().getSerializable(ARG_TASKS);
-            categoriesById = (Map<String, Category>) getArguments().getSerializable("categories");
+            selectedDate = (LocalDate) getArguments().getSerializable(ARG_DATE);
         }
+        generateOccurrencesUseCase = new GenerateTaskOccurrencesUseCase();
     }
 
     @Nullable
@@ -67,9 +73,42 @@ public class DayTasksBottomSheetFragment extends BottomSheetDialogFragment imple
         taskViewModel = new ViewModelProvider(requireActivity()).get(TaskViewModel.class);
         binding.textBottomSheetTitle.setText(getArguments().getString(ARG_DATE_TITLE));
 
-        DayTasksAdapter adapter = new DayTasksAdapter(tasks, categoriesById, this);
+        setupRecyclerView();
+        setupObservers();
+    }
+
+    private void setupRecyclerView() {
+        adapter = new DayTasksAdapter(new ArrayList<>(), new HashMap<>(), this);
         binding.recyclerViewDayTasks.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.recyclerViewDayTasks.setAdapter(adapter);
+    }
+
+    private void setupObservers() {
+        taskViewModel.getTasks().observe(getViewLifecycleOwner(), allTasks -> refreshTasks());
+        taskViewModel.getCategories().observe(getViewLifecycleOwner(), categories -> refreshTasks());
+    }
+
+    private void refreshTasks() {
+        List<Task> allTasks = taskViewModel.getTasks().getValue();
+        List<Category> allCategories = taskViewModel.getCategories().getValue();
+
+        if (allTasks == null || allCategories == null || selectedDate == null) {
+            return;
+        }
+
+        List<Task> tasksForDate = new ArrayList<>();
+        for (Task task : allTasks) {
+            List<LocalDate> occurrences = generateOccurrencesUseCase.execute(task, selectedDate, selectedDate);
+            if (!occurrences.isEmpty()) {
+                tasksForDate.add(task);
+            }
+        }
+
+        Map<String, Category> categoriesMap = allCategories.stream()
+                .filter(c -> c.getId() != null)
+                .collect(Collectors.toMap(Category::getId, c -> c));
+
+        adapter.updateData(tasksForDate, categoriesMap);
     }
 
     @Override

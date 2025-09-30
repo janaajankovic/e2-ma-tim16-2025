@@ -14,6 +14,8 @@ import com.example.habittrackerrpg.data.model.TaskStatus;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -33,10 +35,19 @@ public class DayTasksAdapter extends RecyclerView.Adapter<DayTasksAdapter.TaskVi
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
     public DayTasksAdapter(List<Task> tasks, Map<String, Category> categoriesById, OnTaskActionListener listener) {
-        this.tasks = tasks;
-        this.categoriesById = categoriesById;
+        this.tasks = new ArrayList<>(tasks);
+        this.categoriesById = new HashMap<>(categoriesById);
         this.listener = listener;
     }
+
+    public void updateData(List<Task> newTasks, Map<String, Category> newCategories) {
+        this.tasks.clear();
+        this.tasks.addAll(newTasks);
+        this.categoriesById.clear();
+        this.categoriesById.putAll(newCategories);
+        notifyDataSetChanged();
+    }
+
 
     @NonNull
     @Override
@@ -121,19 +132,27 @@ public class DayTasksAdapter extends RecyclerView.Adapter<DayTasksAdapter.TaskVi
                     break;
                 case UNCOMPLETED:
                     taskStatusChip.setChipBackgroundColorResource(R.color.action_color_cancel);
+                    break;
                 default:
                     taskStatusChip.setChipBackgroundColorResource(R.color.action_color_pause);
                     break;
             }
-            
+
             if (isActionable) {
                 if (task.getStatus() == TaskStatus.PAUSED) {
                     pauseButton.setVisibility(View.GONE);
                     activateButton.setVisibility(View.VISIBLE);
                 } else {
-                    pauseButton.setVisibility(View.VISIBLE);
+                    pauseButton.setVisibility(task.isRecurring() ? View.VISIBLE : View.GONE);
                     activateButton.setVisibility(View.GONE);
                 }
+                completeButton.setVisibility(View.VISIBLE);
+                cancelButton.setVisibility(View.VISIBLE);
+            } else {
+                completeButton.setVisibility(View.GONE);
+                cancelButton.setVisibility(View.GONE);
+                pauseButton.setVisibility(View.GONE);
+                activateButton.setVisibility(View.GONE);
             }
         }
     }
