@@ -53,6 +53,13 @@ public class EquipmentDetailFragment extends Fragment {
     private void setupObservers() {
         viewModel.getUserInventory().observe(getViewLifecycleOwner(), inventory -> updateUi());
         viewModel.getShopItems().observe(getViewLifecycleOwner(), shopItems -> updateUi());
+        viewModel.getToastMessage().observe(getViewLifecycleOwner(), event -> {
+            String message = event.getContentIfNotHandled();
+            if (message != null) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
+
     }
 
     private void updateUi() {
@@ -117,6 +124,14 @@ public class EquipmentDetailFragment extends Fragment {
             if (iconId != 0) {
                 binding.imageViewItemIcon.setImageResource(iconId);
             }
+        }
+
+        if (userItem.isActive()) {
+            binding.buttonActivate.setEnabled(false);
+            binding.buttonActivate.setText("Activated");
+        } else {
+            binding.buttonActivate.setEnabled(true);
+            binding.buttonActivate.setText("Activate");
         }
 
         binding.buttonActivate.setOnClickListener(v -> {

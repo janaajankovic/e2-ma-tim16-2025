@@ -15,9 +15,9 @@ import androidx.navigation.Navigation;
 
 import com.example.habittrackerrpg.MainActivity;
 import com.example.habittrackerrpg.R;
-import com.example.habittrackerrpg.data.model.EquipmentItem; // NOVO
+import com.example.habittrackerrpg.data.model.EquipmentItem;
 import com.example.habittrackerrpg.data.model.User;
-import com.example.habittrackerrpg.data.model.UserEquipment; // NOVO
+import com.example.habittrackerrpg.data.model.UserEquipment;
 import com.example.habittrackerrpg.databinding.FragmentProfileBinding;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.MultiFormatWriter;
@@ -25,15 +25,15 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.journeyapps.barcodescanner.BarcodeEncoder;
 
-import java.util.HashMap; // NOVO
-import java.util.List;   // NOVO
-import java.util.Map;    // NOVO
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ProfileFragment extends Fragment {
 
     private FragmentProfileBinding binding;
     private ProfileViewModel profileViewModel;
-    private InventoryAdapter inventoryAdapter; // NOVO: Adapter za listu opreme
+    private InventoryAdapter inventoryAdapter;
 
     @Nullable
     @Override
@@ -48,8 +48,8 @@ public class ProfileFragment extends Fragment {
 
         profileViewModel = new ViewModelProvider(requireActivity()).get(ProfileViewModel.class);
 
-        setupRecyclerView(); // NOVO: Pozivamo metodu za podešavanje liste
-        setupObservers();    // NOVO: Preimenovao sam metodu da bude jasnije
+        setupRecyclerView();
+        setupObservers();
     }
 
     // NOVO: Metoda za podešavanje RecyclerView-a
@@ -67,15 +67,12 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    // NOVO: Metoda za postavljanje svih observera
     private void setupObservers() {
         profileViewModel.getUser().observe(getViewLifecycleOwner(), this::updateUI);
 
-        // NOVO: Observeri za inventar
         profileViewModel.getUserInventory().observe(getViewLifecycleOwner(), inventory -> updateInventoryData());
         profileViewModel.getShopItems().observe(getViewLifecycleOwner(), shopItems -> updateInventoryData());
 
-        // Vraćamo originalnu funkcionalnost dugmetu za odjavu
         binding.buttonLogout.setOnClickListener(v -> {
             if (getActivity() instanceof MainActivity) {
                 ((MainActivity) getActivity()).performLogout();
@@ -83,7 +80,6 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    // NOVO: Pomoćna metoda koja osvežava podatke u adapteru
     private void updateInventoryData() {
         List<UserEquipment> inventory = profileViewModel.getUserInventory().getValue();
         List<EquipmentItem> shopItems = profileViewModel.getShopItems().getValue();
