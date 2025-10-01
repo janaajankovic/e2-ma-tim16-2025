@@ -4,7 +4,9 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.habittrackerrpg.data.model.Clothing;
 import com.example.habittrackerrpg.data.model.EquipmentItem;
+import com.example.habittrackerrpg.data.model.EquipmentType;
 import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.data.model.UserEquipment;
 import com.example.habittrackerrpg.data.repository.EquipmentRepository;
@@ -61,5 +63,41 @@ public class EquipmentViewModel extends ViewModel {
     }
     public void addShopItemForTesting(EquipmentItem item) {
         equipmentRepository.addShopItemForTesting(item);
+    }
+    public void activateItem(UserEquipment itemToActivate) {
+        if (itemToActivate.isActive()) {
+            toastMessage.setValue(new Event<>("Item is already active."));
+            return;
+        }
+
+        if (itemToActivate.getType() == EquipmentType.CLOTHING) {
+            List<UserEquipment> currentInventory = userInventory.getValue();
+            if (currentInventory != null) {
+                EquipmentItem definition = getShopItems().getValue().stream()
+                        .filter(def -> def.getId().equals(itemToActivate.getEquipmentId()))
+                        .findFirst().orElse(null);
+
+                if (definition instanceof Clothing) {
+                    Clothing.ClothingType typeToActivate = ((Clothing) definition).getClothingType();
+
+                    for (UserEquipment itemInInventory : currentInventory) {
+                        if (itemInInventory.isActive() && itemInInventory.getType() == EquipmentType.CLOTHING) {
+                            EquipmentItem invDef = getShopItems().getValue().stream()
+                                    .filter(def -> def.getId().equals(itemInInventory.getEquipmentId()))
+                                    .findFirst().orElse(null);
+
+                            if (invDef instanceof Clothing && ((Clothing) invDef).getClothingType() == typeToActivate) {
+                                toastMessage.setValue(new Event<>("You can only have one " + typeToActivate.name().toLowerCase() + " item active at a time."));
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        itemToActivate.setActive(true);
+        equipmentRepository.updateUserEquipment(itemToActivate);
+        toastMessage.setValue(new Event<>("Item activated!"));
     }
 }

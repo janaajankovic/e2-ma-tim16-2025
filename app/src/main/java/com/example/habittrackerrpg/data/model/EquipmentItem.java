@@ -11,13 +11,16 @@ public abstract class EquipmentItem {
     private EquipmentType type;
     private int cost; // Cijena u novčićima
 
+    private String icon;
+
     public EquipmentItem() {}
 
-    public EquipmentItem(String name, String description, EquipmentType type, int cost) {
+    public EquipmentItem(String name, String description, EquipmentType type, int cost,  String icon) {
         this.name = name;
         this.description = description;
         this.type = type;
         this.cost = cost;
+        this.icon = icon;
     }
 
     public String getId() { return id; }
@@ -30,4 +33,6 @@ public abstract class EquipmentItem {
     public void setType(EquipmentType type) { this.type = type; }
     public int getCost() { return cost; }
     public void setCost(int cost) { this.cost = cost; }
+    public String getIcon() { return icon; }
+    public void setIcon(String icon) { this.icon = icon; }
 }

@@ -15,8 +15,8 @@ public class Weapon extends EquipmentItem {
         this.setType(EquipmentType.WEAPON);
     }
 
-    public Weapon(String name, String description, WeaponType weaponType, double effectValue) {
-        super(name, description, EquipmentType.WEAPON, 0); // Oružje se ne kupuje
+    public Weapon(String name, String description, WeaponType weaponType, double effectValue, String icon) {
+        super(name, description, EquipmentType.WEAPON, 0, icon); // Oružje se ne kupuje
         this.weaponType = weaponType;
         this.effectValue = effectValue;
         this.upgradeBonus = 0.0;

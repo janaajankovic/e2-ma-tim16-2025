@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import androidx.navigation.Navigation;
 
 public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.InventoryViewHolder> {
 
@@ -44,7 +45,14 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
         this.equipmentDefinitions = equipmentDefinitions;
         notifyDataSetChanged();
     }
+    public interface OnItemClickListener {
+        void onItemClick(UserEquipment userEquipment);
+    }
+    private OnItemClickListener listener;
 
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
     class InventoryViewHolder extends RecyclerView.ViewHolder {
         private TextView textViewName;
         private TextView textViewState;
@@ -53,7 +61,15 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
             super(itemView);
             textViewName = itemView.findViewById(R.id.textViewItemName);
             textViewState = itemView.findViewById(R.id.textViewItemState);
+            itemView.setOnClickListener(v -> {
+                int position = getAdapterPosition();
+                if (listener != null && position != RecyclerView.NO_POSITION) {
+                    listener.onItemClick(userInventory.get(position));
+                }
+            });
         }
+
+
 
         public void bind(UserEquipment userItem, EquipmentItem definition) {
             if (definition != null) {

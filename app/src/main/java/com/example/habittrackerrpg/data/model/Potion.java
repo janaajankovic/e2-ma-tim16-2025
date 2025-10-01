@@ -10,8 +10,8 @@ public class Potion extends EquipmentItem {
         this.setType(EquipmentType.POTION);
     }
 
-    public Potion(String name, String description, int cost, boolean isPermanent, int ppBoostPercent) {
-        super(name, description, EquipmentType.POTION, cost);
+    public Potion(String name, String description, int cost, boolean isPermanent, int ppBoostPercent, String icon) {
+        super(name, description, EquipmentType.POTION, cost, icon);
         this.isPermanent = isPermanent;
         this.ppBoostPercent = ppBoostPercent;
     }

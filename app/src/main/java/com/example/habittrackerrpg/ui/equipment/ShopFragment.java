@@ -71,26 +71,26 @@ public class ShopFragment extends Fragment {
     private void addTestDataToShop() {
         // --- NAPICI ---
         // Napitak za jednokratnu snagu +20%
-        Potion potion1 = new Potion("Minor Power Potion", "Increases PP by 20% for one battle.", 150, false, 20);
+        Potion potion1 = new Potion("Minor Power Potion", "Increases PP by 20% for one battle.", 150, false, 20, "ic_potion1");
 
         // Napitak za jednokratnu snagu +40%
-        Potion potion2 = new Potion("Major Power Potion", "Increases PP by 40% for one battle.", 300, false, 40);
+        Potion potion2 = new Potion("Major Power Potion", "Increases PP by 40% for one battle.", 300, false, 40, "ic_potion2");
 
         // Napitak za trajno povećanje snage +5%
-        Potion potion3 = new Potion("Elixir of Strength", "Permanently increases PP by 5%.", 2500, true, 5);
+        Potion potion3 = new Potion("Elixir of Strength", "Permanently increases PP by 5%.", 2500, true, 5, "ic_potion3");
 
         // Napitak za trajno povećanje snage +10%
-        Potion potion4 = new Potion("Greater Elixir of Strength", "Permanently increases PP by 10%.", 5000, true, 10);
+        Potion potion4 = new Potion("Greater Elixir of Strength", "Permanently increases PP by 10%.", 5000, true, 10, "ic_potion4");
 
         // --- ODJEĆA ---
         // Rukavice za povećanje snage +10% PP
-        Clothing gloves = new Clothing("Power Gloves", "Increases PP by 10%. Lasts 2 battles.", 600, Clothing.ClothingType.GLOVES, 10);
+        Clothing gloves = new Clothing("Power Gloves", "Increases PP by 10%. Lasts 2 battles.", 600, Clothing.ClothingType.GLOVES, 10, "ic_gloves");
 
         // Štit za povećanje šanse uspešnog napada +10%
-        Clothing shield = new Clothing("Guardian Shield", "Increases attack chance by 10%. Lasts 2 battles.", 600, Clothing.ClothingType.SHIELD, 10);
+        Clothing shield = new Clothing("Guardian Shield", "Increases attack chance by 10%. Lasts 2 battles.", 600, Clothing.ClothingType.SHIELD, 10, "ic_shield");
 
         // Čizme za šansu povećanja broja napada za 40% (1 dodatni napad)
-        Clothing boots = new Clothing("Boots of Haste", "40% chance for an extra attack. Lasts 2 battles.", 800, Clothing.ClothingType.BOOTS, 40);
+        Clothing boots = new Clothing("Boots of Haste", "40% chance for an extra attack. Lasts 2 battles.", 800, Clothing.ClothingType.BOOTS, 40, "ic_boots");
 
         viewModel.addShopItemForTesting(potion1);
         viewModel.addShopItemForTesting(potion2);

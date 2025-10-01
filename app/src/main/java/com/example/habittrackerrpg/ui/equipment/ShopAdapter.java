@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -46,6 +47,7 @@ public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ShopViewHolder
     class ShopViewHolder extends RecyclerView.ViewHolder {
         private TextView textViewName, textViewDescription, textViewEffect, textViewCost;
         private Button buttonBuy;
+        private ImageView imageViewIcon;
 
         public ShopViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -54,6 +56,7 @@ public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ShopViewHolder
             textViewEffect = itemView.findViewById(R.id.textViewItemEffect);
             textViewCost = itemView.findViewById(R.id.textViewItemCost);
             buttonBuy = itemView.findViewById(R.id.buttonBuy);
+            imageViewIcon = itemView.findViewById(R.id.imageViewItemIcon);
 
             buttonBuy.setOnClickListener(v -> {
                 int position = getAdapterPosition();
@@ -68,6 +71,14 @@ public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ShopViewHolder
             textViewName.setText(item.getName());
             textViewDescription.setText(item.getDescription());
             textViewCost.setText(String.format("%d Coins", item.getCost()));
+
+            if (item.getIcon() != null && !item.getIcon().isEmpty()) {
+                int iconId = itemView.getContext().getResources().getIdentifier(
+                        item.getIcon(), "drawable", itemView.getContext().getPackageName());
+                if (iconId != 0) {
+                    imageViewIcon.setImageResource(iconId);
+                }
+            }
 
             // Prikazujemo različit tekst efekta u zavisnosti od tipa predmeta
             if (item instanceof Potion) {

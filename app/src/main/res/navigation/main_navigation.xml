@@ -59,7 +59,23 @@
         android:id="@+id/nav_profile"
         android:name="com.example.habittrackerrpg.ui.profile.ProfileFragment"
         android:label="Profile"
-        tools:layout="@layout/fragment_profile" />
+        tools:layout="@layout/fragment_profile" >
+
+        <action
+            android:id="@+id/action_profile_to_equipmentDetail"
+            app:destination="@id/equipmentDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/equipmentDetailFragment"
+        android:name="com.example.habittrackerrpg.ui.equipment.EquipmentDetailFragment"
+        android:label="Equipment Details"
+        tools:layout="@layout/fragment_equipment_detail">
+
+        <argument
+            android:name="userEquipmentId"
+            app:argType="string" />
+    </fragment>
 
     <fragment
         android:id="@+id/editTaskFragment"

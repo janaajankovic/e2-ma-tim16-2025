@@ -14,8 +14,8 @@ public class Clothing extends EquipmentItem {
         this.durationInBattles = 2;
     }
 
-    public Clothing(String name, String description, int cost, ClothingType clothingType, int effectValue) {
-        super(name, description, EquipmentType.CLOTHING, cost);
+    public Clothing(String name, String description, int cost, ClothingType clothingType, int effectValue, String icon) {
+        super(name, description, EquipmentType.CLOTHING, cost, icon);
         this.clothingType = clothingType;
         this.effectValue = effectValue;
         this.durationInBattles = 2;

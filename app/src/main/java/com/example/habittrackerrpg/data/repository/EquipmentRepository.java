@@ -128,4 +128,18 @@ public class EquipmentRepository {
                 .addOnSuccessListener(docRef -> Log.d(TAG, "Shop item added: " + docRef.getId()))
                 .addOnFailureListener(e -> Log.w(TAG, "Failed to add shop item", e));
     }
+
+    public void updateUserEquipment(UserEquipment itemToUpdate) {
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null || itemToUpdate.getId() == null) {
+            Log.e(TAG, "Cannot update item. User not logged in or item has no ID.");
+            return;
+        }
+        String uid = firebaseUser.getUid();
+
+        db.collection("users").document(uid).collection("inventory").document(itemToUpdate.getId())
+                .set(itemToUpdate)
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "UserEquipment item successfully updated!"))
+                .addOnFailureListener(e -> Log.w(TAG, "Error updating UserEquipment item", e));
+    }
 }

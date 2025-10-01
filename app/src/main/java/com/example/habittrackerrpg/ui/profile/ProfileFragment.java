@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 
 import com.example.habittrackerrpg.MainActivity;
 import com.example.habittrackerrpg.R;
@@ -56,6 +57,14 @@ public class ProfileFragment extends Fragment {
         inventoryAdapter = new InventoryAdapter();
         // Koristimo ID koji smo definisali u XML-u
         binding.recyclerViewInventory.setAdapter(inventoryAdapter);
+        inventoryAdapter.setOnItemClickListener(userEquipment -> {
+            // Kreiramo bundle da pošaljemo ID predmeta
+            Bundle bundle = new Bundle();
+            bundle.putString("userEquipmentId", userEquipment.getId());
+
+            // Pokrećemo navigaciju ka detaljima
+            Navigation.findNavController(requireView()).navigate(R.id.action_profile_to_equipmentDetail, bundle);
+        });
     }
 
     // NOVO: Metoda za postavljanje svih observera
