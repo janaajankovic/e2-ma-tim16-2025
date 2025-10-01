@@ -3,6 +3,7 @@ package com.example.habittrackerrpg.ui.statistics;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+import com.example.habittrackerrpg.data.model.Category;
 import com.example.habittrackerrpg.data.model.Task;
 import com.example.habittrackerrpg.data.model.TaskImportance;
 import com.example.habittrackerrpg.data.model.TaskStatus;
@@ -24,6 +25,7 @@ public class StatisticsViewModel extends ViewModel {
 
     private final ProfileRepository profileRepository;
     private final LiveData<User> userLiveData;
+    private final LiveData<List<Category>> categoriesLiveData;
 
     private final CalculateLongestStreakUseCase calculateLongestStreakUseCase;
     private final CalculateActiveDaysUseCase calculateActiveDaysUseCase;
@@ -47,28 +49,33 @@ public class StatisticsViewModel extends ViewModel {
         this.calculateDailyXpUseCase = new CalculateDailyXpUseCase();
         this.calculateOverallAverageDifficultyUseCase = new CalculateOverallAverageDifficultyUseCase();
 
-        this.allTasksLiveData = taskViewModel.getAllCompletedTasksForStats();
+        this.allTasksLiveData = taskViewModel.getAllTasksAndInstancesForStats();
+        this.categoriesLiveData = taskViewModel.getCategories();
         this.userLiveData = profileRepository.getUserLiveData();
 
-        userLiveData.observeForever(user -> processTasks(allTasksLiveData.getValue(), user));
-        allTasksLiveData.observeForever(tasks -> processTasks(tasks, userLiveData.getValue()));
+        userLiveData.observeForever(user -> processData());
+        allTasksLiveData.observeForever(tasks -> processData());
+        categoriesLiveData.observeForever(categories -> processData());
     }
 
-    private void processTasks(List<Task> tasks, User user) {
-        if (tasks == null || user == null) {
+    private void processData() {
+        List<Task> tasks = allTasksLiveData.getValue();
+        User user = userLiveData.getValue();
+        List<Category> categories = categoriesLiveData.getValue();
+
+        if (tasks == null || user == null || categories == null) {
             return;
         }
 
         tasksByStatus.setValue(calculateTasksByStatus(tasks));
-        completedTasksByCategory.setValue(calculateCompletedTasksByCategory(tasks));
+        completedTasksByCategory.setValue(calculateCompletedTasksByCategory(tasks, categories));
         longestStreak.setValue(calculateLongestStreakUseCase.execute(tasks));
         activeDays.setValue(calculateActiveDaysUseCase.execute(tasks));
         averageDifficultyDescription.setValue(calculateOverallAverageDifficultyUseCase.execute(tasks, user.getLevel()).description);
         specialMissions.setValue(calculateSpecialMissions(tasks));
 
-
         Map<LocalDate, List<Integer>> dailyXpMap = calculateDailyXpUseCase.getDailyXpMap(tasks, user.getLevel());
-       List<LocalDate> sortedDates = new ArrayList<>(dailyXpMap.keySet());
+        List<LocalDate> sortedDates = new ArrayList<>(dailyXpMap.keySet());
         Collections.sort(sortedDates);
 
         List<Entry> totalXpEntries = new ArrayList<>();
@@ -110,11 +117,17 @@ public class StatisticsViewModel extends ViewModel {
         return statusCount;
     }
 
-    private Map<String, Integer> calculateCompletedTasksByCategory(List<Task> tasks) {
+    private Map<String, Integer> calculateCompletedTasksByCategory(List<Task> tasks, List<Category> categories) {
+        Map<String, String> categoryIdToNameMap = new HashMap<>();
+        for (Category category : categories) {
+            categoryIdToNameMap.put(category.getId(), category.getName());
+        }
+
         Map<String, Integer> categoryCount = new HashMap<>();
         for (Task task : tasks) {
             if (task.getStatus() == TaskStatus.COMPLETED && task.getCategoryId() != null) {
-                categoryCount.put(task.getCategoryId(), categoryCount.getOrDefault(task.getCategoryId(), 0) + 1);
+                String categoryName = categoryIdToNameMap.getOrDefault(task.getCategoryId(), "Unknown");
+                categoryCount.put(categoryName, categoryCount.getOrDefault(categoryName, 0) + 1);
             }
         }
         return categoryCount;
