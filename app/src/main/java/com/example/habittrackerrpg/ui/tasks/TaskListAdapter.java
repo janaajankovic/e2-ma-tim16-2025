@@ -6,21 +6,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.ListAdapter;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.habittrackerrpg.R;
 import com.example.habittrackerrpg.data.model.Category;
 import com.example.habittrackerrpg.data.model.Task;
+import com.example.habittrackerrpg.data.model.TaskStatus;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Locale;
 
-import androidx.recyclerview.widget.DiffUtil;
-import androidx.recyclerview.widget.ListAdapter;
-
-public class TaskListAdapter extends  ListAdapter<Task, TaskListAdapter.TaskViewHolder> {
+public class TaskListAdapter extends ListAdapter<Task, TaskListAdapter.TaskViewHolder> {
 
     public interface OnTaskActionListener {
         void onCompleteClick(Task task);
@@ -29,7 +30,6 @@ public class TaskListAdapter extends  ListAdapter<Task, TaskListAdapter.TaskView
         void onTaskClick(Task task);
     }
 
-    private List<Task> tasks;
     private final Map<String, Category> categoriesById;
     private final OnTaskActionListener listener;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault());
@@ -62,6 +62,10 @@ public class TaskListAdapter extends  ListAdapter<Task, TaskListAdapter.TaskView
     private static final DiffUtil.ItemCallback<Task> DIFF_CALLBACK = new DiffUtil.ItemCallback<Task>() {
         @Override
         public boolean areItemsTheSame(@NonNull Task oldItem, @NonNull Task newItem) {
+            if (oldItem.isRecurring() && newItem.isRecurring()) {
+                return oldItem.getId().equals(newItem.getId()) &&
+                        Objects.equals(oldItem.getDueDate(), newItem.getDueDate());
+            }
             return oldItem.getId().equals(newItem.getId());
         }
 
@@ -70,11 +74,12 @@ public class TaskListAdapter extends  ListAdapter<Task, TaskListAdapter.TaskView
             return oldItem.equals(newItem);
         }
     };
+
     class TaskViewHolder extends RecyclerView.ViewHolder {
         private final TextView taskName, taskDueDate;
         private final View categoryColorBar;
         private final Chip taskStatusChip;
-        private final MaterialButton completeButton, cancelButton, pauseButton, activateButton;
+        private final MaterialButton completeButton, cancelButton, pauseButton;
         private final View actionsContainer;
 
         public TaskViewHolder(@NonNull View itemView) {
@@ -86,17 +91,16 @@ public class TaskListAdapter extends  ListAdapter<Task, TaskListAdapter.TaskView
             completeButton = itemView.findViewById(R.id.button_complete_task);
             cancelButton = itemView.findViewById(R.id.button_cancel_task);
             pauseButton = itemView.findViewById(R.id.button_pause_task);
-            activateButton = itemView.findViewById(R.id.button_activate_task);
             actionsContainer = itemView.findViewById(R.id.actions_container);
         }
 
         public void bind(final Task task) {
             taskName.setText(task.getName());
 
-            if (task.isRecurring() && task.getRecurrenceStartDate() != null) {
-                taskDueDate.setText("Starts: " + dateFormat.format(task.getRecurrenceStartDate()));
-            } else if (task.getDueDate() != null) {
+            if (task.getDueDate() != null) {
                 taskDueDate.setText("Due: " + dateFormat.format(task.getDueDate()));
+            } else {
+                taskDueDate.setText("No due date");
             }
 
             Category category = categoriesById.get(task.getCategoryId());
@@ -110,7 +114,6 @@ public class TaskListAdapter extends  ListAdapter<Task, TaskListAdapter.TaskView
             completeButton.setOnClickListener(v -> listener.onCompleteClick(task));
             cancelButton.setOnClickListener(v -> listener.onCancelClick(task));
             pauseButton.setOnClickListener(v -> listener.onPauseClick(task));
-            activateButton.setOnClickListener(v -> listener.onPauseClick(task));
         }
 
         private void updateStatusUI(Task task) {
@@ -118,50 +121,44 @@ public class TaskListAdapter extends  ListAdapter<Task, TaskListAdapter.TaskView
 
             switch (task.getStatus()) {
                 case COMPLETED:
-                    taskStatusChip.setChipBackgroundColorResource(R.color.action_color_done);
-                    break;
+                    taskStatusChip.setChipBackgroundColorResource(R.color.action_color_done); break;
                 case CANCELLED:
-                    taskStatusChip.setChipBackgroundColorResource(R.color.icon_tint_default);
-                    break;
+                    taskStatusChip.setChipBackgroundColorResource(R.color.icon_tint_default); break;
                 case PAUSED:
-                    taskStatusChip.setChipBackgroundColorResource(R.color.icon_color_on_action);
-                    break;
+                    taskStatusChip.setChipBackgroundColorResource(R.color.icon_color_on_action); break;
                 case UNCOMPLETED:
-                    taskStatusChip.setChipBackgroundColorResource(R.color.action_color_cancel);
+                    taskStatusChip.setChipBackgroundColorResource(R.color.action_color_cancel); break;
                 default:
-                    taskStatusChip.setChipBackgroundColorResource(R.color.action_color_pause);
-                    break;
+                    taskStatusChip.setChipBackgroundColorResource(R.color.action_color_pause); break;
             }
 
-            switch (task.getStatus()) {
-                case ACTIVE:
-                    actionsContainer.setVisibility(View.VISIBLE);
-                    completeButton.setVisibility(View.VISIBLE);
-                    cancelButton.setVisibility(View.VISIBLE);
+            if (task.getStatus() == TaskStatus.COMPLETED || task.getStatus() == TaskStatus.CANCELLED || task.getStatus() == TaskStatus.UNCOMPLETED) {
+                actionsContainer.setVisibility(View.GONE);
+                return;
+            }
 
-                    if (task.isRecurring()) {
-                        pauseButton.setVisibility(View.VISIBLE);
-                    } else {
-                        pauseButton.setVisibility(View.GONE);
-                    }
-                    activateButton.setVisibility(View.GONE);
-                    break;
+            actionsContainer.setVisibility(View.VISIBLE);
 
-                case PAUSED:
-                    actionsContainer.setVisibility(View.VISIBLE);
-                    activateButton.setVisibility(View.VISIBLE);
-                    cancelButton.setVisibility(View.GONE);
-                    completeButton.setVisibility(View.GONE);
+            if (task.getStatus() == TaskStatus.ACTIVE) {
+                completeButton.setVisibility(View.VISIBLE);
+                cancelButton.setVisibility(View.VISIBLE);
+
+                if (task.isRecurring()) {
+                    pauseButton.setVisibility(View.VISIBLE);
+                    pauseButton.setText("Pause");
+                    pauseButton.setIconResource(R.drawable.ic_pause_circle);
+                } else {
                     pauseButton.setVisibility(View.GONE);
-                    break;
+                }
 
-                case COMPLETED:
-                case CANCELLED:
-                case UNCOMPLETED:
-                    actionsContainer.setVisibility(View.GONE);
-                    break;
+            } else if (task.getStatus() == TaskStatus.PAUSED) {
+                completeButton.setVisibility(View.GONE);
+                cancelButton.setVisibility(View.GONE);
+
+                pauseButton.setVisibility(View.VISIBLE);
+                pauseButton.setText("Activate");
+                pauseButton.setIconResource(R.drawable.ic_play_circle);
             }
         }
-
     }
 }

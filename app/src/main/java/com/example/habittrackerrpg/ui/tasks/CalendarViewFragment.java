@@ -16,6 +16,8 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.example.habittrackerrpg.R;
 import com.example.habittrackerrpg.data.model.Category;
 import com.example.habittrackerrpg.data.model.Task;
+import com.example.habittrackerrpg.data.model.TaskInstance;
+import com.example.habittrackerrpg.data.model.TaskStatus;
 import com.example.habittrackerrpg.logic.GenerateTaskOccurrencesUseCase;
 import com.kizitonwose.calendar.core.CalendarDay;
 import com.kizitonwose.calendar.view.CalendarView;
@@ -23,9 +25,11 @@ import com.kizitonwose.calendar.view.MonthDayBinder;
 import com.kizitonwose.calendar.view.ViewContainer;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -63,29 +67,63 @@ public class CalendarViewFragment extends Fragment implements DayTasksBottomShee
     private void setupObservers() {
         taskViewModel.getCategories().observe(getViewLifecycleOwner(), categories -> {
             if (categories != null) {
-                categoriesById = categories.stream().collect(Collectors.toMap(Category::getId, c -> c));
-                calendarView.notifyCalendarChanged();
+                categoriesById = categories.stream()
+                        .filter(c -> c.getId() != null)
+                        .collect(Collectors.toMap(Category::getId, c -> c));
+                refreshCalendarData();
             }
         });
 
-        taskViewModel.getTasks().observe(getViewLifecycleOwner(), tasks -> {
-            if (tasks != null) {
-                tasksByDate.clear();
-
-                YearMonth currentMonth = YearMonth.now();
-                LocalDate rangeStart = currentMonth.minusMonths(12).atDay(1);
-                LocalDate rangeEnd = currentMonth.plusMonths(12).atEndOfMonth();
-
-                for (Task task : tasks) {
-                    List<LocalDate> occurrences = generateOccurrencesUseCase.execute(task, rangeStart, rangeEnd);
-                    for (LocalDate date : occurrences) {
-                        tasksByDate.computeIfAbsent(date, k -> new ArrayList<>()).add(task);
-                    }
-                }
-                calendarView.notifyCalendarChanged();
-            }
-        });
+        taskViewModel.getTaskRules().observe(getViewLifecycleOwner(), rules -> refreshCalendarData());
+        taskViewModel.getTaskInstances().observe(getViewLifecycleOwner(), instances -> refreshCalendarData());
     }
+
+    private void refreshCalendarData() {
+        List<Task> taskRules = taskViewModel.getTaskRules().getValue();
+        List<TaskInstance> taskInstances = taskViewModel.getTaskInstances().getValue();
+
+        if (taskRules == null || taskInstances == null) {
+            return;
+        }
+
+        tasksByDate.clear();
+
+        Map<String, TaskInstance> instanceMap = taskInstances.stream()
+                .collect(Collectors.toMap(
+                        instance -> instance.getOriginalTaskId() + "_" + instance.getInstanceDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().toString(),
+                        instance -> instance,
+                        (a, b) -> b
+                ));
+
+        YearMonth currentMonth = YearMonth.now();
+        LocalDate rangeStart = currentMonth.minusMonths(12).atDay(1);
+        LocalDate rangeEnd = currentMonth.plusMonths(12).atEndOfMonth();
+
+        for (Task rule : taskRules) {
+            List<LocalDate> occurrences = generateOccurrencesUseCase.execute(rule, rangeStart, rangeEnd);
+
+            for (LocalDate occurrenceDate : occurrences) {
+                String instanceKey = rule.getId() + "_" + occurrenceDate.toString();
+                TaskInstance instance = instanceMap.get(instanceKey);
+
+                Task virtualTask = new Task(rule);
+                Date dateForDisplay = Date.from(occurrenceDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+                virtualTask.setDueDate(dateForDisplay);
+
+                if (instance != null) {
+                    virtualTask.setStatus(instance.getStatus());
+                } else {
+                    virtualTask.setStatus(rule.getStatus());
+                }
+
+                tasksByDate.computeIfAbsent(occurrenceDate, k -> new ArrayList<>()).add(virtualTask);
+
+            }
+        }
+
+        calendarView.notifyCalendarChanged();
+    }
+
 
     private void setupCalendar() {
         YearMonth currentMonth = YearMonth.now();

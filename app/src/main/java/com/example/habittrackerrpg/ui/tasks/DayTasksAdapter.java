@@ -48,6 +48,12 @@ public class DayTasksAdapter extends RecyclerView.Adapter<DayTasksAdapter.TaskVi
         notifyDataSetChanged();
     }
 
+    public void setCategories(Map<String, Category> newCategories) {
+        this.categoriesById.clear();
+        this.categoriesById.putAll(newCategories);
+        notifyDataSetChanged();
+    }
+
 
     @NonNull
     @Override
@@ -72,7 +78,7 @@ public class DayTasksAdapter extends RecyclerView.Adapter<DayTasksAdapter.TaskVi
         private final View taskInfoContainer;
         private final Chip taskStatusChip;
         private final View actionsContainer, divider;
-        private final MaterialButton completeButton, cancelButton, pauseButton, activateButton;
+        private final MaterialButton completeButton, cancelButton, pauseButton;
 
         public TaskViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -86,17 +92,17 @@ public class DayTasksAdapter extends RecyclerView.Adapter<DayTasksAdapter.TaskVi
             completeButton = itemView.findViewById(R.id.button_complete_task);
             cancelButton = itemView.findViewById(R.id.button_cancel_task);
             pauseButton = itemView.findViewById(R.id.button_pause_task);
-            activateButton = itemView.findViewById(R.id.button_activate_task);
         }
 
         public void bind(final Task task) {
             taskName.setText(task.getName());
 
-            if (task.isRecurring() && task.getRecurrenceStartDate() != null) {
-                taskTime.setText(timeFormat.format(task.getRecurrenceStartDate()));
-            } else if (task.getDueDate() != null) {
+            if (task.getDueDate() != null) {
                 taskTime.setText(timeFormat.format(task.getDueDate()));
+            } else if (task.isRecurring() && task.getRecurrenceStartDate() != null) {
+                taskTime.setText(timeFormat.format(task.getRecurrenceStartDate()));
             }
+
 
             Category category = categoriesById.get(task.getCategoryId());
             if (category != null) {
@@ -108,7 +114,6 @@ public class DayTasksAdapter extends RecyclerView.Adapter<DayTasksAdapter.TaskVi
             completeButton.setOnClickListener(v -> listener.onCompleteClick(task));
             cancelButton.setOnClickListener(v -> listener.onCancelClick(task));
             pauseButton.setOnClickListener(v -> listener.onPauseClick(task));
-            activateButton.setOnClickListener(v -> listener.onPauseClick(task));
 
             taskInfoContainer.setOnClickListener(v -> listener.onTaskClick(task));
         }
@@ -122,37 +127,37 @@ public class DayTasksAdapter extends RecyclerView.Adapter<DayTasksAdapter.TaskVi
 
             switch (task.getStatus()) {
                 case COMPLETED:
-                    taskStatusChip.setChipBackgroundColorResource(R.color.action_color_done);
-                    break;
+                    taskStatusChip.setChipBackgroundColorResource(R.color.action_color_done); break;
                 case CANCELLED:
-                    taskStatusChip.setChipBackgroundColorResource(R.color.icon_tint_default);
-                    break;
+                    taskStatusChip.setChipBackgroundColorResource(R.color.icon_tint_default); break;
                 case PAUSED:
-                    taskStatusChip.setChipBackgroundColorResource(R.color.icon_color_on_action);
-                    break;
+                    taskStatusChip.setChipBackgroundColorResource(R.color.icon_color_on_action); break;
                 case UNCOMPLETED:
-                    taskStatusChip.setChipBackgroundColorResource(R.color.action_color_cancel);
-                    break;
+                    taskStatusChip.setChipBackgroundColorResource(R.color.action_color_cancel); break;
                 default:
-                    taskStatusChip.setChipBackgroundColorResource(R.color.action_color_pause);
-                    break;
+                    taskStatusChip.setChipBackgroundColorResource(R.color.action_color_pause); break;
             }
 
             if (isActionable) {
-                if (task.getStatus() == TaskStatus.PAUSED) {
-                    pauseButton.setVisibility(View.GONE);
-                    activateButton.setVisibility(View.VISIBLE);
-                } else {
-                    pauseButton.setVisibility(task.isRecurring() ? View.VISIBLE : View.GONE);
-                    activateButton.setVisibility(View.GONE);
+                if (task.getStatus() == TaskStatus.ACTIVE) {
+                    completeButton.setVisibility(View.VISIBLE);
+                    cancelButton.setVisibility(View.VISIBLE);
+
+                    if (task.isRecurring()) {
+                        pauseButton.setVisibility(View.VISIBLE);
+                        pauseButton.setText("Pause");
+                        pauseButton.setIconResource(R.drawable.ic_pause_circle);
+                    } else {
+                        pauseButton.setVisibility(View.GONE);
+                    }
+
+                } else if (task.getStatus() == TaskStatus.PAUSED) {
+                    completeButton.setVisibility(View.GONE);
+                    cancelButton.setVisibility(View.GONE);
+                    pauseButton.setVisibility(View.VISIBLE);
+                    pauseButton.setText("Activate");
+                    pauseButton.setIconResource(R.drawable.ic_play_circle);
                 }
-                completeButton.setVisibility(View.VISIBLE);
-                cancelButton.setVisibility(View.VISIBLE);
-            } else {
-                completeButton.setVisibility(View.GONE);
-                cancelButton.setVisibility(View.GONE);
-                pauseButton.setVisibility(View.GONE);
-                activateButton.setVisibility(View.GONE);
             }
         }
     }

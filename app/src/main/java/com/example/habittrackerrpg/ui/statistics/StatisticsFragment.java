@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import com.example.habittrackerrpg.data.model.TaskStatus;
 import com.example.habittrackerrpg.databinding.FragmentStatisticsBinding;
+import com.example.habittrackerrpg.ui.tasks.TaskViewModel;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.PieChart;
@@ -52,7 +53,11 @@ public class StatisticsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        statisticsViewModel = new ViewModelProvider(this).get(StatisticsViewModel.class);
+
+        TaskViewModel taskViewModel = new ViewModelProvider(requireActivity()).get(TaskViewModel.class);
+        StatisticsViewModelFactory factory = new StatisticsViewModelFactory(taskViewModel);
+        statisticsViewModel = new ViewModelProvider(this, factory).get(StatisticsViewModel.class);
+
         setupObservers();
     }
 

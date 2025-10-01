@@ -77,18 +77,15 @@ public class CreateTaskFragment extends Fragment {
     }
 
     private void showDateTimePickerDialog(final Calendar calendar, final TextView textViewToUpdate) {
-        // Prvo biramo datum
         DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), (view, year, month, dayOfMonth) -> {
             calendar.set(Calendar.YEAR, year);
             calendar.set(Calendar.MONTH, month);
             calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
 
-            // Odmah nakon datuma, biramo vreme
             TimePickerDialog timePickerDialog = new TimePickerDialog(getContext(), (timeView, hourOfDay, minute) -> {
                 calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
                 calendar.set(Calendar.MINUTE, minute);
 
-                // Sada kada imamo i datum i vreme, ažuriramo prikaz
                 textViewToUpdate.setText(dateTimeFormat.format(calendar.getTime()));
             }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true); // true za 24h format
             timePickerDialog.show();
