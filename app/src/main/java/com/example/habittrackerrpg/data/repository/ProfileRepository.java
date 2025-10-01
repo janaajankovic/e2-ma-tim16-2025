@@ -57,7 +57,6 @@ public class ProfileRepository {
                         currentUser.setLevel(newLevel);
                         currentUser.setTitle(TitleHelper.getTitleForLevel(newLevel));
 
-                        // ISPRAVNA LOGIKA ZA PP POENE
                         long totalPpToAdd = 0;
                         for (int level = oldLevel + 1; level <= newLevel; level++) {
                             totalPpToAdd += ppCalculator.execute(level);
