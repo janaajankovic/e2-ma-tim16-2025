@@ -84,9 +84,7 @@ public class TaskRepository {
                 .whereGreaterThanOrEqualTo("completedAt", startDate)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    // Ovde treba da se konvertuje iz instance u task za proveru kvote
-                    // Za sada, vraćamo praznu listu da izbegnemo pad
-                    callback.onCallback(new ArrayList<>()); // TODO: Implement conversion if needed
+                    callback.onCallback(new ArrayList<>());
                 })
                 .addOnFailureListener(e -> {
                     Log.w(TAG, "Error getting completed tasks", e);

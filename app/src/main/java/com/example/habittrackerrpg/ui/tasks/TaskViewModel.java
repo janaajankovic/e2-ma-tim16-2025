@@ -5,15 +5,18 @@ import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
 import com.example.habittrackerrpg.data.model.Category;
 import com.example.habittrackerrpg.data.model.Task;
 import com.example.habittrackerrpg.data.model.TaskInstance;
 import com.example.habittrackerrpg.data.model.TaskStatus;
+import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.data.repository.CategoryRepository;
 import com.example.habittrackerrpg.data.repository.ProfileRepository;
 import com.example.habittrackerrpg.data.repository.TaskRepository;
+import com.example.habittrackerrpg.logic.CalculateTaskXpUseCase;
 import com.example.habittrackerrpg.logic.CheckTaskQuotaUseCase;
 import com.example.habittrackerrpg.logic.Event;
 import com.example.habittrackerrpg.logic.UpdateOverdueRecurringInstancesUseCase;
@@ -40,7 +43,7 @@ public class TaskViewModel extends ViewModel {
     private LiveData<List<Task>> taskRulesLiveData;
     private LiveData<List<TaskInstance>> taskInstancesLiveData;
     private MediatorLiveData<List<Task>> allCompletedTasksForStats = new MediatorLiveData<>();
-
+    private final LiveData<User> userLiveData;
 
     public TaskViewModel() {
         taskRepository = new TaskRepository();
@@ -49,10 +52,10 @@ public class TaskViewModel extends ViewModel {
         checkTaskQuotaUseCase = new CheckTaskQuotaUseCase();
         updateOverdueTasksUseCase = new UpdateOverdueTasksUseCase();
         updateOverdueRecurringInstancesUseCase = new UpdateOverdueRecurringInstancesUseCase();
-
         taskRulesLiveData = taskRepository.getTasks();
         taskInstancesLiveData = taskRepository.getTaskInstances();
         categoriesLiveData = categoryRepository.getCategories();
+        userLiveData = profileRepository.getUserLiveData();
 
         allCompletedTasksForStats.addSource(taskRulesLiveData, rules -> combineDataForStats());
         allCompletedTasksForStats.addSource(taskInstancesLiveData, instances -> combineDataForStats());
@@ -116,38 +119,61 @@ public class TaskViewModel extends ViewModel {
 
     public void updateTaskStatus(Task task, TaskStatus newStatus, Date occurrenceDate) {
         if (task.isRecurring()) {
-
             if (newStatus == TaskStatus.PAUSED || newStatus == TaskStatus.ACTIVE) {
                 Task ruleToUpdate = new Task(task);
                 ruleToUpdate.setStatus(newStatus);
-
                 taskRepository.updateTask(ruleToUpdate);
-
                 String message = (newStatus == TaskStatus.PAUSED) ? "Task paused." : "Task activated.";
                 toastMessage.postValue(new Event<>(message));
-
             } else {
-                TaskInstance instance = new TaskInstance(task.getId(), task.getUserId(), occurrenceDate, newStatus);
-                taskRepository.addTaskInstance(instance);
-
                 if (newStatus == TaskStatus.COMPLETED) {
-                    profileRepository.addXp(task.getXpValue());
-                    toastMessage.postValue(new Event<>("Task completed! +" + task.getXpValue() + " XP"));
+                    handleTaskCompletion(task, occurrenceDate);
+                } else {
+                    TaskInstance instance = new TaskInstance(task.getId(), task.getUserId(), occurrenceDate, newStatus);
+                    taskRepository.addTaskInstance(instance);
                 }
             }
+        } else {
+            if (newStatus == TaskStatus.COMPLETED) {
+                handleTaskCompletion(task, null); // occurrenceDate nije potreban
+            } else {
+                Task taskToUpdate = new Task(task);
+                taskToUpdate.setStatus(newStatus);
+                taskRepository.updateTask(taskToUpdate);
+            }
+        }
+    }
 
+    private void handleTaskCompletion(final Task task, final Date occurrenceDate) {
+        User currentUser = userLiveData.getValue();
+        if (currentUser == null) {
+            Log.e("TaskViewModel", "Cannot handle task completion, user is null.");
+            return;
+        }
+
+        Observer<List<Task>> observer = new Observer<>() {
+            @Override
+            public void onChanged(List<Task> updatedCompletedTasks) {
+                Log.d("TaskViewModel", "Observer triggered. Completed tasks count: " + updatedCompletedTasks.size());
+
+                int finalXp = checkTaskQuotaUseCase.execute(task, updatedCompletedTasks, currentUser.getLevel());
+                profileRepository.addXp(finalXp);
+                toastMessage.postValue(new Event<>("Task completed! +" + finalXp + " XP"));
+
+                allCompletedTasksForStats.removeObserver(this);
+            }
+        };
+
+        allCompletedTasksForStats.observeForever(observer);
+
+        if (task.isRecurring()) {
+            TaskInstance instance = new TaskInstance(task.getId(), task.getUserId(), occurrenceDate, TaskStatus.COMPLETED);
+            taskRepository.addTaskInstance(instance);
         } else {
             Task taskToUpdate = new Task(task);
-            taskToUpdate.setStatus(newStatus);
-            if (newStatus == TaskStatus.COMPLETED) {
-                taskToUpdate.setCompletedAt(new Date());
-            }
+            taskToUpdate.setStatus(TaskStatus.COMPLETED);
+            taskToUpdate.setCompletedAt(new Date());
             taskRepository.updateTask(taskToUpdate);
-
-            if (newStatus == TaskStatus.COMPLETED) {
-                profileRepository.addXp(task.getXpValue());
-                toastMessage.postValue(new Event<>("Task completed! +" + task.getXpValue() + " XP"));
-            }
         }
     }
 
