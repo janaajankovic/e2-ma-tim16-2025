@@ -1,6 +1,8 @@
 package com.example.habittrackerrpg.ui.tasks;
 
+import android.app.TimePickerDialog;
 import android.os.Bundle;
+import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -96,6 +98,25 @@ public class EditTaskFragment extends Fragment {
     }
 
     private void showTimePickerDialog() {
+        int hour = selectedTimeCalendar.get(Calendar.HOUR_OF_DAY);
+        int minute = selectedTimeCalendar.get(Calendar.MINUTE);
+
+        TimePickerDialog.OnTimeSetListener timeSetListener = (view, hourOfDay, minuteOfHour) -> {
+            selectedTimeCalendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+            selectedTimeCalendar.set(Calendar.MINUTE, minuteOfHour);
+
+            binding.textViewSelectedTime.setText(timeFormat.format(selectedTimeCalendar.getTime()));
+        };
+
+        TimePickerDialog timePickerDialog = new TimePickerDialog(
+                requireContext(),
+                timeSetListener,
+                hour,
+                minute,
+                DateFormat.is24HourFormat(requireContext())
+        );
+
+        timePickerDialog.show();
     }
 
     private void saveChanges() {

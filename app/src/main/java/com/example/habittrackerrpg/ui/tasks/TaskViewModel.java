@@ -217,11 +217,14 @@ public class TaskViewModel extends ViewModel {
             editedTask.setCreatedAt(originalTask.getCreatedAt());
             editedTask.setStatus(originalTask.getStatus());
             editedTask.setXpValue(editedTask.calculateXp());
+            editedTask.setDueDate(editedTask.getDueDate());
             taskRepository.updateTask(editedTask);
             toastMessage.postValue(new Event<>("Task updated successfully!"));
 
         } else {
             Date splitDate = new Date();
+            editedTask.setXpValue(editedTask.calculateXp());
+            editedTask.setDueDate(editedTask.getDueDate());
             taskRepository.splitRecurringTask(originalTask, editedTask, splitDate);
             toastMessage.postValue(new Event<>("Task updated for all future occurrences!"));
         }

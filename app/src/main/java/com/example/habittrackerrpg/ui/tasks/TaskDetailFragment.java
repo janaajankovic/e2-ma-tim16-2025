@@ -109,7 +109,6 @@ public class TaskDetailFragment extends Fragment {
         binding.textDifficultyInfo.setText("Difficulty: " + task.getDifficulty().name());
         binding.textImportanceInfo.setText("Importance: " + task.getImportance().name());
         binding.textXpValueInfo.setText("Value: +" + task.getXpValue() + " XP");
-
         populateScheduleInfo(task);
         populateCategoryInfo(task);
         updateActionButtons(task);
