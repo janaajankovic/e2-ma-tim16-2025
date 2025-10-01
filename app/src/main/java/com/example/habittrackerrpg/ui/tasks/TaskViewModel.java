@@ -48,7 +48,8 @@ public class TaskViewModel extends ViewModel {
         profileRepository = new ProfileRepository();
         checkTaskQuotaUseCase = new CheckTaskQuotaUseCase();
         updateOverdueTasksUseCase = new UpdateOverdueTasksUseCase();
-        mAuth = FirebaseAuth.getInstance();
+        updateOverdueRecurringInstancesUseCase = new UpdateOverdueRecurringInstancesUseCase();
+
         taskRulesLiveData = taskRepository.getTasks();
         taskInstancesLiveData = taskRepository.getTaskInstances();
         categoriesLiveData = categoryRepository.getCategories();
@@ -56,6 +57,18 @@ public class TaskViewModel extends ViewModel {
         allCompletedTasksForStats.addSource(taskRulesLiveData, rules -> combineDataForStats());
         allCompletedTasksForStats.addSource(taskInstancesLiveData, instances -> combineDataForStats());
 
+        MediatorLiveData<Object> overdueChecker = new MediatorLiveData<>();
+        overdueChecker.addSource(taskRulesLiveData, value -> overdueChecker.setValue(new Object()));
+        overdueChecker.addSource(taskInstancesLiveData, value -> overdueChecker.setValue(new Object()));
+
+        overdueChecker.observeForever(obj -> {
+            List<Task> rules = taskRulesLiveData.getValue();
+            List<TaskInstance> instances = taskInstancesLiveData.getValue();
+            if (rules != null && instances != null) {
+                updateOverdueTasksUseCase.execute(rules, taskRepository);
+                updateOverdueRecurringInstancesUseCase.execute(rules, instances, taskRepository);
+            }
+        });
     }
 
     private Date getStartOfToday() {
