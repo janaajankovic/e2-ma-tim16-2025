@@ -44,6 +44,7 @@ public class TaskViewModel extends ViewModel {
     private LiveData<List<TaskInstance>> taskInstancesLiveData;
     private MediatorLiveData<List<Task>> allCompletedTasksForStats = new MediatorLiveData<>();
     private final LiveData<User> userLiveData;
+    private MediatorLiveData<List<Task>> allTasksAndInstancesForStats = new MediatorLiveData<>();
 
     public TaskViewModel() {
         taskRepository = new TaskRepository();
@@ -57,8 +58,10 @@ public class TaskViewModel extends ViewModel {
         categoriesLiveData = categoryRepository.getCategories();
         userLiveData = profileRepository.getUserLiveData();
 
-        allCompletedTasksForStats.addSource(taskRulesLiveData, rules -> combineDataForStats());
-        allCompletedTasksForStats.addSource(taskInstancesLiveData, instances -> combineDataForStats());
+        allCompletedTasksForStats.addSource(taskRulesLiveData, rules -> combineDataForStats(true));
+        allCompletedTasksForStats.addSource(taskInstancesLiveData, instances -> combineDataForStats(true));
+        allTasksAndInstancesForStats.addSource(taskRulesLiveData, rules -> combineDataForStats(false));
+        allTasksAndInstancesForStats.addSource(taskInstancesLiveData, instances -> combineDataForStats(false));
 
         MediatorLiveData<Object> overdueChecker = new MediatorLiveData<>();
         overdueChecker.addSource(taskRulesLiveData, value -> overdueChecker.setValue(new Object()));
@@ -72,6 +75,7 @@ public class TaskViewModel extends ViewModel {
                 updateOverdueRecurringInstancesUseCase.execute(rules, instances, taskRepository);
             }
         });
+
     }
 
     private Date getStartOfToday() {
@@ -135,7 +139,7 @@ public class TaskViewModel extends ViewModel {
             }
         } else {
             if (newStatus == TaskStatus.COMPLETED) {
-                handleTaskCompletion(task, null); // occurrenceDate nije potreban
+                handleTaskCompletion(task, null);
             } else {
                 Task taskToUpdate = new Task(task);
                 taskToUpdate.setStatus(newStatus);
@@ -177,19 +181,23 @@ public class TaskViewModel extends ViewModel {
         }
     }
 
-    private void combineDataForStats() {
+    private void combineDataForStats(boolean completedOnly) {
         List<Task> taskRules = taskRulesLiveData.getValue();
         List<TaskInstance> instances = taskInstancesLiveData.getValue();
         if (taskRules == null || instances == null) return;
 
-        List<Task> completedEvents = new ArrayList<>();
+        List<Task> events = new ArrayList<>();
+        // Prvo prolazimo kroz jednokratne zadatke
         for (Task rule : taskRules) {
-            if (!rule.isRecurring() && rule.getStatus() == TaskStatus.COMPLETED) {
-                completedEvents.add(rule);
+            if (!rule.isRecurring()) {
+                if (!completedOnly || rule.getStatus() == TaskStatus.COMPLETED) {
+                    events.add(rule);
+                }
             }
         }
+        // Zatim prolazimo kroz instance ponavljajućih zadataka
         for (TaskInstance instance : instances) {
-            if (instance.getStatus() == TaskStatus.COMPLETED) {
+            if (!completedOnly || instance.getStatus() == TaskStatus.COMPLETED) {
                 taskRules.stream()
                         .filter(rule -> rule.getId().equals(instance.getOriginalTaskId()))
                         .findFirst()
@@ -199,11 +207,16 @@ public class TaskViewModel extends ViewModel {
                             event.setStatus(instance.getStatus());
                             event.setCompletedAt(instance.getCompletedAt());
                             event.setDueDate(instance.getInstanceDate());
-                            completedEvents.add(event);
+                            events.add(event);
                         });
             }
         }
-        allCompletedTasksForStats.setValue(completedEvents);
+
+        if (completedOnly) {
+            allCompletedTasksForStats.setValue(events);
+        } else {
+            allTasksAndInstancesForStats.setValue(events);
+        }
     }
 
     public LiveData<List<Task>> getAllCompletedTasksForStats() {
@@ -243,5 +256,9 @@ public class TaskViewModel extends ViewModel {
             taskRepository.deleteTask(task.getId());
             toastMessage.postValue(new Event<>("Task deleted successfully."));
         }
+    }
+
+     public LiveData<List<Task>> getAllTasksAndInstancesForStats() {
+        return allTasksAndInstancesForStats;
     }
 }

@@ -17,10 +17,20 @@ public class CalculateActiveDaysUseCase {
 
         Set<LocalDate> activeDays = new HashSet<>();
         for (Task task : tasks) {
-            LocalDate taskDate = Instant.ofEpochMilli(task.getCreatedAt().getTime())
-                    .atZone(ZoneId.systemDefault())
-                    .toLocalDate();
-            activeDays.add(taskDate);
+            // Dodajemo dan kada je zadatak kreiran
+            if (task.getCreatedAt() != null) {
+                LocalDate createdAtDate = Instant.ofEpochMilli(task.getCreatedAt().getTime())
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate();
+                activeDays.add(createdAtDate);
+            }
+
+            if (task.getCompletedAt() != null) {
+                LocalDate completedAtDate = Instant.ofEpochMilli(task.getCompletedAt().getTime())
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate();
+                activeDays.add(completedAtDate);
+            }
         }
 
         return activeDays.size();

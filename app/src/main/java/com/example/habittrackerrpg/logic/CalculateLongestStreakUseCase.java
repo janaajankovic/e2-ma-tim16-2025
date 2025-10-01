@@ -7,57 +7,91 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class CalculateLongestStreakUseCase {
     public int execute(List<Task> tasks) {
-        if (tasks == null || tasks.isEmpty()) return 0;
+        if (tasks == null || tasks.isEmpty()) {
+            return 0;
+        }
 
-        Map<LocalDate, Boolean> dailyCompletionStatus = new HashMap<>();
-
-        // Prolazimo kroz sve zadatke i za svaki dan beležimo da li su svi zadaci tog dana završeni
         Map<LocalDate, List<Task>> tasksByDay = new HashMap<>();
         for (Task task : tasks) {
-            LocalDate date = task.getDueDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            tasksByDay.computeIfAbsent(date, k -> new ArrayList<>()).add(task);
+            if (task.getDueDate() != null) {
+                LocalDate date = task.getDueDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                tasksByDay.computeIfAbsent(date, k -> new ArrayList<>()).add(task);
+            }
         }
+
+        Set<LocalDate> streakBreakerDays = new HashSet<>();
+        Set<LocalDate> completedDays = new HashSet<>();
 
         for (Map.Entry<LocalDate, List<Task>> entry : tasksByDay.entrySet()) {
-            boolean allTasksCompleted = true;
-            for (Task task : entry.getValue()) {
-                if (task.getStatus() != TaskStatus.COMPLETED) {
-                    allTasksCompleted = false;
-                    break;
+            LocalDate day = entry.getKey();
+            List<Task> dayTasks = entry.getValue();
+
+            boolean hasCompletedTask = false;
+            boolean hasUncompletedTask = false;
+
+            for (Task task : dayTasks) {
+                if (task.getStatus() == TaskStatus.COMPLETED) {
+                    hasCompletedTask = true;
+                } else if (task.getStatus() == TaskStatus.UNCOMPLETED) { // Pretpostavka da postoji UNCOMPLETED status
+                    hasUncompletedTask = true;
                 }
             }
-            dailyCompletionStatus.put(entry.getKey(), allTasksCompleted);
+
+            if (hasCompletedTask) {
+                completedDays.add(day);
+            }
+            if (hasUncompletedTask && !hasCompletedTask) {
+                // Dan prekida niz samo ako ima neurađen zadatak, A NEMA nijedan urađen
+                streakBreakerDays.add(day);
+            }
         }
 
-        List<LocalDate> sortedDates = new ArrayList<>(dailyCompletionStatus.keySet());
-        Collections.sort(sortedDates);
+        if (completedDays.isEmpty()) {
+            return 0;
+        }
+
+        List<LocalDate> sortedCompletedDays = new ArrayList<>(completedDays);
+        Collections.sort(sortedCompletedDays);
 
         int longestStreak = 0;
         int currentStreak = 0;
-        LocalDate previousDate = null;
+        LocalDate lastDayInStreak = null;
 
-        for (LocalDate date : sortedDates) {
-            if (dailyCompletionStatus.get(date)) { // Ako su svi zadaci za taj dan završeni
-                if (previousDate == null || date.isEqual(previousDate.plusDays(1))) {
-                    currentStreak++;
-                } else {
-                    currentStreak = 1;
+        for (LocalDate day : sortedCompletedDays) {
+            if (lastDayInStreak == null) {
+                // Početak prvog niza
+                currentStreak = 1;
+            } else {
+                // Proveravamo da li između ovog i prethodnog dana u nizu postoji dan koji prekida niz
+                boolean isStreakBroken = false;
+                LocalDate tempDate = lastDayInStreak.plusDays(1);
+                while (tempDate.isBefore(day)) {
+                    if (streakBreakerDays.contains(tempDate)) {
+                        isStreakBroken = true;
+                        break;
+                    }
+                    tempDate = tempDate.plusDays(1);
                 }
-            } else { // Ako bar jedan zadatak nije završen, niz se prekida
-                currentStreak = 0;
+
+                if (isStreakBroken) {
+                    currentStreak = 1; // Niz je prekinut, počni novi
+                } else {
+                    currentStreak++; // Nastavi niz
+                }
             }
 
             if (currentStreak > longestStreak) {
                 longestStreak = currentStreak;
             }
-            previousDate = date;
+            lastDayInStreak = day;
         }
-
         return longestStreak;
     }
 }

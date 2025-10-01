@@ -7,18 +7,13 @@ import java.util.List;
 
 public class CalculateOverallAverageDifficultyUseCase {
 
-    private final CalculateTaskXpUseCase xpCalculator;
-
-    public CalculateOverallAverageDifficultyUseCase() {
-        this.xpCalculator = new CalculateTaskXpUseCase();
-    }
-
     public static class Result {
         public final String description;
         public Result(String description) { this.description = description; }
     }
 
     public Result execute(List<Task> tasks, int userLevel) {
+
         List<Task> completedTasks = new ArrayList<>();
         for(Task task : tasks){
             if(task.getStatus() == TaskStatus.COMPLETED){
@@ -30,7 +25,8 @@ public class CalculateOverallAverageDifficultyUseCase {
 
         float totalXp = 0;
         for (Task task : completedTasks) {
-            totalXp += xpCalculator.execute(task, userLevel);
+
+            totalXp += task.calculateXp();
         }
 
         float averageXp = totalXp / completedTasks.size();
