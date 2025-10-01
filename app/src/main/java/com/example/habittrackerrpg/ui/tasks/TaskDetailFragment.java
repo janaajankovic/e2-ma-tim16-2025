@@ -1,5 +1,6 @@
 package com.example.habittrackerrpg.ui.tasks;
 
+import android.app.AlertDialog;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -136,6 +137,7 @@ public class TaskDetailFragment extends Fragment {
             return;
         }
 
+
         binding.actionsContainer.setVisibility(View.VISIBLE);
         binding.buttonEditTask.setVisibility(View.VISIBLE);
         binding.buttonDeleteTask.setVisibility(View.VISIBLE);
@@ -174,7 +176,18 @@ public class TaskDetailFragment extends Fragment {
             NavHostFragment.findNavController(TaskDetailFragment.this)
                     .navigate(R.id.action_taskDetailFragment_to_editTaskFragment, bundle);
         });
-        // TODO: Implementirati listenere za Delete dugme
+
+        binding.buttonDeleteTask.setOnClickListener(v -> {
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Delete Task")
+                    .setMessage("Are you sure you want to delete this task? This action cannot be undone.")
+                    .setPositiveButton("Delete", (dialog, which) -> {
+                        taskViewModel.deleteTask(task);
+                        NavHostFragment.findNavController(TaskDetailFragment.this).popBackStack();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
     }
 
     private void populateScheduleInfo(Task task) {

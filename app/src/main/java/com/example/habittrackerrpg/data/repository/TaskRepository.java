@@ -180,4 +180,28 @@ public class TaskRepository {
                 .addOnSuccessListener(aVoid -> Log.d(TAG, "Recurring task split successfully."))
                 .addOnFailureListener(e -> Log.w(TAG, "Error splitting recurring task", e));
     }
+
+    public void deleteTask(String taskId) {
+        if (mAuth.getCurrentUser() == null || taskId == null) return;
+        String uid = mAuth.getCurrentUser().getUid();
+
+        db.collection("users").document(uid).collection("tasks").document(taskId)
+                .delete()
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "Task successfully deleted!"))
+                .addOnFailureListener(e -> Log.w(TAG, "Error deleting task", e));
+    }
+
+    public void deleteTaskFutureOccurrences(Task taskRule) {
+        if (mAuth.getCurrentUser() == null || taskRule.getId() == null) return;
+        String uid = mAuth.getCurrentUser().getUid();
+
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_YEAR, -1);
+        Date yesterday = cal.getTime();
+
+        db.collection("users").document(uid).collection("tasks").document(taskRule.getId())
+                .update("recurrenceEndDate", yesterday)
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "Future occurrences of task deleted."))
+                .addOnFailureListener(e -> Log.w(TAG, "Error updating task for deletion", e));
+    }
 }

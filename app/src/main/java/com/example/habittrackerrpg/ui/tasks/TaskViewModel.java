@@ -200,4 +200,19 @@ public class TaskViewModel extends ViewModel {
             toastMessage.postValue(new Event<>("Task updated for all future occurrences!"));
         }
     }
+
+    public void deleteTask(Task task) {
+        if (task.getStatus() == TaskStatus.COMPLETED || task.getStatus() == TaskStatus.UNCOMPLETED || task.getStatus() == TaskStatus.CANCELLED) {
+            toastMessage.postValue(new Event<>("Cannot delete a completed task."));
+            return;
+        }
+
+        if (task.isRecurring()) {
+            taskRepository.deleteTaskFutureOccurrences(task);
+            toastMessage.postValue(new Event<>("Future occurrences have been deleted."));
+        } else {
+            taskRepository.deleteTask(task.getId());
+            toastMessage.postValue(new Event<>("Task deleted successfully."));
+        }
+    }
 }
