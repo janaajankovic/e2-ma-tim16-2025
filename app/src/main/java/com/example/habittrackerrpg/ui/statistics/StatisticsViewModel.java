@@ -10,6 +10,7 @@ import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.data.repository.ProfileRepository;
 import com.example.habittrackerrpg.data.repository.StatisticsRepository;
 import com.example.habittrackerrpg.logic.*;
+import com.example.habittrackerrpg.ui.tasks.TaskViewModel;
 import com.github.mikephil.charting.data.Entry;
 
 import java.time.LocalDate;
@@ -38,7 +39,7 @@ public class StatisticsViewModel extends ViewModel {
     private final MutableLiveData<String> averageDifficultyDescription = new MutableLiveData<>();
     private final MutableLiveData<String> specialMissions = new MutableLiveData<>();
 
-    public StatisticsViewModel() {
+    public StatisticsViewModel(TaskViewModel taskViewModel) {
         this.statisticsRepository = new StatisticsRepository();
         this.profileRepository = new ProfileRepository();
         this.calculateLongestStreakUseCase = new CalculateLongestStreakUseCase();
@@ -46,7 +47,7 @@ public class StatisticsViewModel extends ViewModel {
         this.calculateDailyXpUseCase = new CalculateDailyXpUseCase();
         this.calculateOverallAverageDifficultyUseCase = new CalculateOverallAverageDifficultyUseCase();
 
-        this.allTasksLiveData = statisticsRepository.getAllTasks();
+        this.allTasksLiveData = taskViewModel.getAllCompletedTasksForStats();
         this.userLiveData = profileRepository.getUserLiveData();
 
         userLiveData.observeForever(user -> processTasks(allTasksLiveData.getValue(), user));
@@ -55,7 +56,7 @@ public class StatisticsViewModel extends ViewModel {
 
     private void processTasks(List<Task> tasks, User user) {
         if (tasks == null || user == null) {
-            return; // Čekamo da i zadaci i korisnik budu dostupni
+            return;
         }
 
         tasksByStatus.setValue(calculateTasksByStatus(tasks));

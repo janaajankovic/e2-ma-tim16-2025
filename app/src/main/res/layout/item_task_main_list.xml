@@ -77,16 +77,6 @@
             app:layout_constraintEnd_toEndOf="parent">
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_activate_task"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Activate"
-                android:visibility="gone"
-                app:icon="@drawable/ic_play_circle" />
-
-            <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_pause_task"
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="0dp"

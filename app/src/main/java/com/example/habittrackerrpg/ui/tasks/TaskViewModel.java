@@ -9,13 +9,16 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.habittrackerrpg.data.model.Category;
 import com.example.habittrackerrpg.data.model.Task;
+import com.example.habittrackerrpg.data.model.TaskInstance;
 import com.example.habittrackerrpg.data.model.TaskStatus;
 import com.example.habittrackerrpg.data.repository.CategoryRepository;
 import com.example.habittrackerrpg.data.repository.ProfileRepository;
 import com.example.habittrackerrpg.data.repository.TaskRepository;
 import com.example.habittrackerrpg.logic.CheckTaskQuotaUseCase;
 import com.example.habittrackerrpg.logic.Event;
+import com.example.habittrackerrpg.logic.UpdateOverdueRecurringInstancesUseCase;
 import com.example.habittrackerrpg.logic.UpdateOverdueTasksUseCase;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -29,13 +32,15 @@ public class TaskViewModel extends ViewModel {
     private ProfileRepository profileRepository;
     private CheckTaskQuotaUseCase checkTaskQuotaUseCase;
     private UpdateOverdueTasksUseCase updateOverdueTasksUseCase;
-
+    private UpdateOverdueRecurringInstancesUseCase updateOverdueRecurringInstancesUseCase;
+    private FirebaseAuth mAuth;
     private LiveData<List<Category>> categoriesLiveData;
     private MutableLiveData<Event<String>> toastMessage = new MutableLiveData<>();
 
-    private LiveData<List<Task>> sourceTasks;
+    private LiveData<List<Task>> taskRulesLiveData;
+    private LiveData<List<TaskInstance>> taskInstancesLiveData;
+    private MediatorLiveData<List<Task>> allCompletedTasksForStats = new MediatorLiveData<>();
 
-    private MediatorLiveData<List<Task>> tasksLiveData = new MediatorLiveData<>();
 
     public TaskViewModel() {
         taskRepository = new TaskRepository();
@@ -43,15 +48,14 @@ public class TaskViewModel extends ViewModel {
         profileRepository = new ProfileRepository();
         checkTaskQuotaUseCase = new CheckTaskQuotaUseCase();
         updateOverdueTasksUseCase = new UpdateOverdueTasksUseCase();
-
+        mAuth = FirebaseAuth.getInstance();
+        taskRulesLiveData = taskRepository.getTasks();
+        taskInstancesLiveData = taskRepository.getTaskInstances();
         categoriesLiveData = categoryRepository.getCategories();
 
-        sourceTasks = taskRepository.getTasks();
+        allCompletedTasksForStats.addSource(taskRulesLiveData, rules -> combineDataForStats());
+        allCompletedTasksForStats.addSource(taskInstancesLiveData, instances -> combineDataForStats());
 
-        tasksLiveData.addSource(sourceTasks, tasks -> {
-            tasksLiveData.setValue(tasks);
-            Log.d("REALTIME_DEBUG", "MediatorLiveData updated from repository. Task count: " + (tasks != null ? tasks.size() : 0));
-        });
     }
 
     private Date getStartOfToday() {
@@ -63,8 +67,12 @@ public class TaskViewModel extends ViewModel {
         return calendar.getTime();
     }
 
-    public LiveData<List<Task>> getTasks() {
-        return tasksLiveData;
+    public LiveData<List<Task>> getTaskRules() {
+        return taskRulesLiveData;
+    }
+
+    public LiveData<List<TaskInstance>> getTaskInstances() {
+        return taskInstancesLiveData;
     }
 
     public LiveData<List<Category>> getCategories() {
@@ -93,57 +101,90 @@ public class TaskViewModel extends ViewModel {
         toastMessage.setValue(new Event<>("Task created successfully!"));
     }
 
-    public void updateTaskStatus(Task task, TaskStatus newStatus) {
-        if (task.getStatus() == TaskStatus.COMPLETED && newStatus == TaskStatus.COMPLETED) {
-            toastMessage.setValue(new Event<>("Task is already completed."));
-            return;
-        }
+    public void updateTaskStatus(Task task, TaskStatus newStatus, Date occurrenceDate) {
+        if (task.isRecurring()) {
 
-        if (task.getStatus() == TaskStatus.UNCOMPLETED || task.getStatus() == TaskStatus.CANCELLED) {
-            toastMessage.setValue(new Event<>("This task can no longer be changed."));
-            return;
-        }
+            if (newStatus == TaskStatus.PAUSED || newStatus == TaskStatus.ACTIVE) {
+                Task ruleToUpdate = new Task(task);
+                ruleToUpdate.setStatus(newStatus);
 
-        if (newStatus == TaskStatus.PAUSED && !task.isRecurring()) {
-            toastMessage.setValue(new Event<>("Only recurring tasks can be paused."));
-            return;
-        }
+                taskRepository.updateTask(ruleToUpdate);
 
-        List<Task> currentTasks = tasksLiveData.getValue();
-        if (currentTasks == null) {
-            currentTasks = new ArrayList<>();
-        }
+                String message = (newStatus == TaskStatus.PAUSED) ? "Task paused." : "Task activated.";
+                toastMessage.postValue(new Event<>(message));
 
-        List<Task> updatedTasks = new ArrayList<>();
-        for (Task t : currentTasks) {
-            if (t.getId() != null && t.getId().equals(task.getId())) {
-                Task updatedTask = new Task(t);
-                updatedTask.setStatus(newStatus);
-                updatedTasks.add(updatedTask);
             } else {
-                updatedTasks.add(t);
+                TaskInstance instance = new TaskInstance(task.getId(), task.getUserId(), occurrenceDate, newStatus);
+                taskRepository.addTaskInstance(instance);
+
+                if (newStatus == TaskStatus.COMPLETED) {
+                    profileRepository.addXp(task.getXpValue());
+                    toastMessage.postValue(new Event<>("Task completed! +" + task.getXpValue() + " XP"));
+                }
+            }
+
+        } else {
+            Task taskToUpdate = new Task(task);
+            taskToUpdate.setStatus(newStatus);
+            if (newStatus == TaskStatus.COMPLETED) {
+                taskToUpdate.setCompletedAt(new Date());
+            }
+            taskRepository.updateTask(taskToUpdate);
+
+            if (newStatus == TaskStatus.COMPLETED) {
+                profileRepository.addXp(task.getXpValue());
+                toastMessage.postValue(new Event<>("Task completed! +" + task.getXpValue() + " XP"));
             }
         }
+    }
 
-        tasksLiveData.setValue(updatedTasks);
+    private void combineDataForStats() {
+        List<Task> taskRules = taskRulesLiveData.getValue();
+        List<TaskInstance> instances = taskInstancesLiveData.getValue();
+        if (taskRules == null || instances == null) return;
 
-        Task taskToUpdate = new Task(task);
-        taskToUpdate.setStatus(newStatus);
+        List<Task> completedEvents = new ArrayList<>();
+        for (Task rule : taskRules) {
+            if (!rule.isRecurring() && rule.getStatus() == TaskStatus.COMPLETED) {
+                completedEvents.add(rule);
+            }
+        }
+        for (TaskInstance instance : instances) {
+            if (instance.getStatus() == TaskStatus.COMPLETED) {
+                taskRules.stream()
+                        .filter(rule -> rule.getId().equals(instance.getOriginalTaskId()))
+                        .findFirst()
+                        .ifPresent(rule -> {
+                            Task event = new Task(rule);
+                            event.setId(instance.getId());
+                            event.setStatus(instance.getStatus());
+                            event.setCompletedAt(instance.getCompletedAt());
+                            event.setDueDate(instance.getInstanceDate());
+                            completedEvents.add(event);
+                        });
+            }
+        }
+        allCompletedTasksForStats.setValue(completedEvents);
+    }
 
-        if (newStatus == TaskStatus.COMPLETED) {
-            Date todayStart = getStartOfToday();
+    public LiveData<List<Task>> getAllCompletedTasksForStats() {
+        return allCompletedTasksForStats;
+    }
 
-            taskRepository.getCompletedTasksSince(todayStart, completedToday -> {
-                if (checkTaskQuotaUseCase.execute(taskToUpdate, completedToday)) {
-                    profileRepository.addXp(taskToUpdate.getXpValue());
-                    toastMessage.postValue(new Event<>("Task completed! +" + taskToUpdate.getXpValue() + " XP"));
-                } else {
-                    toastMessage.postValue(new Event<>("Task completed! XP quota for this type reached for today."));
-                }
-                taskRepository.updateTask(taskToUpdate);
-            });
+    public void editTask(Task originalTask, Task editedTask) {
+        if (!originalTask.isRecurring()) {
+            editedTask.setId(originalTask.getId());
+            editedTask.setUserId(originalTask.getUserId());
+            editedTask.setCreatedAt(originalTask.getCreatedAt());
+            editedTask.setStatus(originalTask.getStatus());
+            editedTask.setXpValue(editedTask.calculateXp());
+            taskRepository.updateTask(editedTask);
+            toastMessage.postValue(new Event<>("Task updated successfully!"));
+
         } else {
-            taskRepository.updateTask(taskToUpdate);
+            Date splitDate = new Date();
+            taskRepository.splitRecurringTask(originalTask, editedTask, splitDate);
+            toastMessage.postValue(new Event<>("Task updated for all future occurrences!"));
         }
     }
 }

@@ -47,6 +47,10 @@
         <argument
             android:name="task"
             app:argType="com.example.habittrackerrpg.data.model.Task" />
+
+        <action
+            android:id="@+id/action_taskDetailFragment_to_editTaskFragment"
+            app:destination="@id/editTaskFragment" />
     </fragment>
 
     <fragment
@@ -54,6 +58,12 @@
         android:name="com.example.habittrackerrpg.ui.profile.ProfileFragment"
         android:label="Profile"
         tools:layout="@layout/fragment_profile" />
+
+    <fragment
+        android:id="@+id/editTaskFragment"
+        android:name="com.example.habittrackerrpg.ui.tasks.EditTaskFragment"
+        android:label="Edit Task"
+        tools:layout="@layout/fragment_edit_task" />
 
     <fragment
         android:id="@+id/nav_stats"
