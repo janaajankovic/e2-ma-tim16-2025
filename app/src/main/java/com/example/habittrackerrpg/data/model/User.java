@@ -1,5 +1,6 @@
 package com.example.habittrackerrpg.data.model;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,6 +12,12 @@ public class User {
     private long pp;
     private long coins;
     private String title;
+    private int highestBossDefeatedLevel;
+
+    private Date lastLevelUpTimestamp;
+    private int lastStageHitChance;
+
+    private int lastBossFightAttemptLevel;
 
     public User() {
     }
@@ -18,14 +25,13 @@ public class User {
     public User(String username, String avatarId) {
         this.username = username;
         this.avatarId = avatarId;
-        // Inicijalne vrednosti prema specifikaciji
         this.level = 1;
         this.xp = 0;
-        this.pp = 0; // Korisnik dobija PP tek nakon prvog nivoa
+        this.pp = 0;
         this.coins = 0;
-        this.title = "Beginner"; // Proizvoljna početna titula
-
-
+        this.title = "Beginner";
+        this.highestBossDefeatedLevel = 0;
+        this.lastLevelUpTimestamp = new Date();
     }
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
@@ -47,4 +53,36 @@ public class User {
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
+
+    public int getHighestBossDefeatedLevel() {
+        return highestBossDefeatedLevel;
+    }
+
+    public void setHighestBossDefeatedLevel(int highestBossDefeatedLevel) {
+        this.highestBossDefeatedLevel = highestBossDefeatedLevel;
+    }
+
+    public Date getLastLevelUpTimestamp() {
+        return lastLevelUpTimestamp;
+    }
+
+    public void setLastLevelUpTimestamp(Date lastLevelUpTimestamp) {
+        this.lastLevelUpTimestamp = lastLevelUpTimestamp;
+    }
+
+    public int getLastStageHitChance() {
+        return lastStageHitChance;
+    }
+
+    public void setLastStageHitChance(int lastStageHitChance) {
+        this.lastStageHitChance = lastStageHitChance;
+    }
+
+    public int getLastBossFightAttemptLevel() {
+        return lastBossFightAttemptLevel;
+    }
+
+    public void setLastBossFightAttemptLevel(int lastBossFightAttemptLevel) {
+        this.lastBossFightAttemptLevel = lastBossFightAttemptLevel;
+    }
 }

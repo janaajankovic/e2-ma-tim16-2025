@@ -48,7 +48,8 @@ public class UpdateOverdueRecurringInstancesUseCase {
                                 rule.getId(),
                                 rule.getUserId(),
                                 java.util.Date.from(occurrenceDate.atStartOfDay(ZoneId.systemDefault()).toInstant()),
-                                TaskStatus.UNCOMPLETED
+                                TaskStatus.UNCOMPLETED,
+                                0
                         );
                         taskRepository.addTaskInstance(uncompletedInstance);
                     }

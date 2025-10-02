@@ -54,9 +54,9 @@ public class ProfileFragment extends Fragment {
 
         // Privremeno dugme za testiranje dodavanja XP-a
         binding.buttonLogout.setText("Add 50 XP (Test)");
-        binding.buttonLogout.setOnClickListener(v -> {
-            profileViewModel.addXpForTesting(50);
-        });
+        //binding.buttonLogout.setOnClickListener(v -> {
+         //   profileViewModel.addXpForTesting(50);
+        //});
 
     }
 
