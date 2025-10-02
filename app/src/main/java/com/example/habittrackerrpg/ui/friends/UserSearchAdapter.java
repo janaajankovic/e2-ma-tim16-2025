@@ -24,12 +24,20 @@ public class UserSearchAdapter extends RecyclerView.Adapter<UserSearchAdapter.Se
     private List<String> friendIds = new ArrayList<>();
     private List<String> sentRequestReceiverIds = new ArrayList<>();
     private String currentUserId;
+    private OnUserClickListener userClickListener;
 
     private OnAddFriendClickListener listener;
     public interface OnAddFriendClickListener {
         void onAddFriendClick(User user);
     }
 
+    public interface OnUserClickListener {
+        void onUserClick(User user);
+    }
+
+    public void setUserClickListener(OnUserClickListener listener) {
+        this.userClickListener = listener;
+    }
     public void setListener(OnAddFriendClickListener listener) {
         this.listener = listener;
     }
@@ -80,6 +88,11 @@ public class UserSearchAdapter extends RecyclerView.Adapter<UserSearchAdapter.Se
             imageViewAvatar = itemView.findViewById(R.id.imageViewAvatar);
             textViewUsername = itemView.findViewById(R.id.textViewUsername);
             buttonAddFriend = itemView.findViewById(R.id.buttonAddFriend);
+            itemView.setOnClickListener(v -> {
+                if (userClickListener != null) {
+                    userClickListener.onUserClick(users.get(getAdapterPosition()));
+                }
+            });
         }
 
         void bind(User user) {

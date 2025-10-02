@@ -1,6 +1,8 @@
 package com.example.habittrackerrpg.data.repository;
 
 import android.util.Log;
+
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.logic.CalculateLevelProgressUseCase;
@@ -68,5 +70,22 @@ public class ProfileRepository {
                     return null;
                 }).addOnSuccessListener(aVoid -> Log.d(TAG, "Transakcija uspešna!"))
                 .addOnFailureListener(e -> Log.w(TAG, "Transakcija neuspešna.", e));
+    }
+
+    public LiveData<User> getUserById(String userId) {
+        MutableLiveData<User> userLiveData = new MutableLiveData<>();
+        db.collection("users").document(userId)
+                .addSnapshotListener((snapshot, e) -> {
+                    if (snapshot != null && snapshot.exists()) {
+                        User user = snapshot.toObject(User.class);
+                        if (user != null) {
+                            user.setId(snapshot.getId());
+                            userLiveData.setValue(user);
+                        }
+                    } else {
+                        userLiveData.setValue(null);
+                    }
+                });
+        return userLiveData;
     }
 }

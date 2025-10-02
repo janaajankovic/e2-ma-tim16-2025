@@ -10,7 +10,14 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
+import com.example.habittrackerrpg.R;
+
+import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.databinding.FragmentSearchUsersBinding;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SearchUsersFragment extends Fragment {
 
@@ -43,6 +50,11 @@ public class SearchUsersFragment extends Fragment {
             viewModel.sendFriendRequest(user.getId());
             Toast.makeText(getContext(), "Friend request sent to " + user.getUsername(), Toast.LENGTH_SHORT).show();
         });
+        adapter.setUserClickListener(user -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("userId", user.getId());
+            Navigation.findNavController(requireView()).navigate(R.id.action_friends_to_profile, bundle);
+        });
     }
 
     private void setupSearchView() {
@@ -74,11 +86,18 @@ public class SearchUsersFragment extends Fragment {
     }
 
     private void updateAdapterData() {
-        var users = viewModel.getSearchResults().getValue();
+        List<User> users = viewModel.getSearchResults().getValue();
         var relatedData = viewModel.getRelatedData().getValue();
 
         if (users != null && relatedData != null) {
-            adapter.setData(users, relatedData.friends, relatedData.sentRequests, relatedData.currentUser.getId());
+            String currentUserId = relatedData.currentUser.getId();
+            List<User> filteredUsers = new ArrayList<>();
+            for (User user : users) {
+                if (!user.getId().equals(currentUserId)) {
+                    filteredUsers.add(user);
+                }
+            }
+            adapter.setData(filteredUsers, relatedData.friends, relatedData.sentRequests, currentUserId);
         }
     }
 
