@@ -6,6 +6,11 @@
         android:title="Tasks" />
 
     <item
+        android:id="@+id/nav_shop"
+        android:icon="@drawable/ic_menu_shop"
+        android:title="Shop" />
+  
+   <item
         android:id="@+id/nav_boss_fight"
         android:icon="@drawable/ic_swords"
         android:title="Boss Fight" />
