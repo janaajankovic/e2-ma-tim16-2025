@@ -172,13 +172,26 @@ public class BossFightFragment extends Fragment {
     private void playHitAnimation() {
         playAnimation("boxing.json", false);
         binding.lottieBossAnimation.addAnimatorListener(new Animator.AnimatorListener() {
-            @Override public void onAnimationStart(Animator animation) {}
-            @Override public void onAnimationEnd(Animator animation) {
-                playAnimation(currentBossIdleAnimation, true);
+            @Override
+            public void onAnimationStart(@NonNull Animator animation) {}
+
+            @Override
+            public void onAnimationEnd(@NonNull Animator animation) {
+                if (currentBossIdleAnimation != null) {
+                    playAnimation(currentBossIdleAnimation, true);
+                }
                 binding.lottieBossAnimation.removeAnimatorListener(this);
             }
-            @Override public void onAnimationCancel(Animator animation) {}
-            @Override public void onAnimationRepeat(Animator animation) {}
+
+            @Override
+            public void onAnimationCancel(@NonNull Animator animation) {
+                if (currentBossIdleAnimation != null) {
+                    playAnimation(currentBossIdleAnimation, true);
+                }
+            }
+
+            @Override
+            public void onAnimationRepeat(@NonNull Animator animation) {}
         });
     }
 

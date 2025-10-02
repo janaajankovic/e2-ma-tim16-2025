@@ -64,13 +64,9 @@ public class GenerateBossUseCase {
                         .filter(b -> b.getLevel() == previousBossLevel)
                         .findFirst();
 
-                if (!previousBossOptional.isPresent()) {
-                    Log.e(TAG, "Cannot generate boss for level " + targetBossLevel + " because previous boss (level " + previousBossLevel + ") is missing!");
-                    return null;
-                }
+                long newHp = Math.round(200 * Math.pow(2.5, targetBossLevel - 1));
+                Log.d(TAG, "Calculated HP for level " + targetBossLevel + ": " + newHp);
 
-                long previousHp = previousBossOptional.get().getHp();
-                long newHp = Math.round(previousHp * 2.5);
 
                 String animationName;
                 if (targetBossLevel <= 4) {
