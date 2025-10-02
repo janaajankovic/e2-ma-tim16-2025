@@ -112,7 +112,7 @@ public class ProfileViewModel extends ViewModel {
     }
 
     public void addXpForTesting(int xpToAdd) {
-        profileRepository.addXp(xpToAdd);
+        //profileRepository.addXp(xpToAdd);
     }
     public LiveData<List<UserEquipment>> getUserInventory() {
         return userInventory;

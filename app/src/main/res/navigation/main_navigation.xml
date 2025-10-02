@@ -30,6 +30,12 @@
     </fragment>
 
     <fragment
+        android:id="@+id/nav_boss_fight"
+        android:name="com.example.habittrackerrpg.ui.bosses.BossFightFragment"
+        android:label="Boss Fight"
+        tools:layout="@layout/fragment_boss_fight" />
+
+    <fragment
         android:id="@+id/calendarViewFragment"
         android:name="com.example.habittrackerrpg.ui.tasks.CalendarViewFragment"
         android:label="Calendar View"

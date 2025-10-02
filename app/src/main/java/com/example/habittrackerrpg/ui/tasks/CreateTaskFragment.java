@@ -131,17 +131,16 @@ public class CreateTaskFragment extends Fragment {
         task.setName(binding.editTextTaskName.getText().toString());
         task.setDescription(binding.editTextTaskDescription.getText().toString());
 
-        // Category
+        task.setAwardedXp(0);
+
         if (binding.spinnerCategory.getSelectedItem() != null) {
             Category selectedCategory = (Category) binding.spinnerCategory.getSelectedItem();
             task.setCategoryId(selectedCategory.getId());
         }
 
-        // Difficulty and Importance
         task.setDifficulty(getSelectedDifficulty());
         task.setImportance(getSelectedImportance());
 
-        // Recurring info
         boolean isRecurring = binding.checkboxRecurring.isChecked();
         task.setRecurring(isRecurring);
         if (isRecurring) {
@@ -149,7 +148,7 @@ public class CreateTaskFragment extends Fragment {
                 int interval = Integer.parseInt(binding.editTextInterval.getText().toString());
                 task.setRecurrenceInterval(interval);
             } catch (NumberFormatException e) {
-                task.setRecurrenceInterval(1); // Default to 1 if input is invalid
+                task.setRecurrenceInterval(1);
             }
             task.setRecurrenceUnit(binding.spinnerRecurrenceUnit.getSelectedItem().toString());
             task.setRecurrenceStartDate(startDate.getTime());

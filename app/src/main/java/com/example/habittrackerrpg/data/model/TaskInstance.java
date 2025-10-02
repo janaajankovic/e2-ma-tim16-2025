@@ -15,15 +15,18 @@ public class TaskInstance implements Serializable {
     private Date instanceDate;
     private TaskStatus status;
     private Date completedAt;
+    private int awardedXp;
+
 
     public TaskInstance() {
     }
 
-    public TaskInstance(String originalTaskId, String userId, Date instanceDate, TaskStatus status) {
+    public TaskInstance(String originalTaskId, String userId, Date instanceDate, TaskStatus status, int awardedXp) {
         this.originalTaskId = originalTaskId;
         this.userId = userId;
         this.instanceDate = instanceDate;
         this.status = status;
+        this.awardedXp = awardedXp;
         if (status == TaskStatus.COMPLETED) {
             this.completedAt = new Date();
         }
@@ -75,5 +78,13 @@ public class TaskInstance implements Serializable {
 
     public void setCompletedAt(Date completedAt) {
         this.completedAt = completedAt;
+    }
+
+    public int getAwardedXp() {
+        return awardedXp;
+    }
+
+    public void setAwardedXp(int awardedXp) {
+        this.awardedXp = awardedXp;
     }
 }

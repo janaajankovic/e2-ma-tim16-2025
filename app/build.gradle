@@ -30,6 +30,11 @@ android {
     buildFeatures {
         viewBinding true
     }
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs += "-Xlint:deprecation"
+        options.compilerArgs += "-Xlint:unchecked"
+    }
 }
 
 dependencies {
@@ -54,4 +59,5 @@ dependencies {
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     implementation("com.github.dhaval2404:colorpicker:2.3")
     implementation("com.kizitonwose.calendar:view:2.5.0")
+    implementation "com.airbnb.android:lottie:6.0.0"
 }

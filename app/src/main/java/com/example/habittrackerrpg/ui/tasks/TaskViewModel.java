@@ -23,6 +23,7 @@ import com.example.habittrackerrpg.logic.UpdateOverdueRecurringInstancesUseCase;
 import com.example.habittrackerrpg.logic.UpdateOverdueTasksUseCase;
 import com.google.firebase.auth.FirebaseAuth;
 
+import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -87,6 +88,10 @@ public class TaskViewModel extends ViewModel {
         return calendar.getTime();
     }
 
+    public LiveData<User> getUserLiveData() {
+        return userLiveData;
+    }
+
     public LiveData<List<Task>> getTaskRules() {
         return taskRulesLiveData;
     }
@@ -133,7 +138,7 @@ public class TaskViewModel extends ViewModel {
                 if (newStatus == TaskStatus.COMPLETED) {
                     handleTaskCompletion(task, occurrenceDate);
                 } else {
-                    TaskInstance instance = new TaskInstance(task.getId(), task.getUserId(), occurrenceDate, newStatus);
+                    TaskInstance instance = new TaskInstance(task.getId(), task.getUserId(), occurrenceDate, newStatus, 0);
                     taskRepository.addTaskInstance(instance);
                 }
             }
@@ -155,30 +160,36 @@ public class TaskViewModel extends ViewModel {
             return;
         }
 
+
         Observer<List<Task>> observer = new Observer<>() {
             @Override
             public void onChanged(List<Task> updatedCompletedTasks) {
-                Log.d("TaskViewModel", "Observer triggered. Completed tasks count: " + updatedCompletedTasks.size());
+                int calculatedXp = checkTaskQuotaUseCase.execute(task, updatedCompletedTasks, currentUser.getLevel());
 
-                int finalXp = checkTaskQuotaUseCase.execute(task, updatedCompletedTasks, currentUser.getLevel());
-                profileRepository.addXp(finalXp);
-                toastMessage.postValue(new Event<>("Task completed! +" + finalXp + " XP"));
+
+                List<Task> allCurrentTasks = taskRulesLiveData.getValue();
+                List<TaskInstance> allCurrentInstances = taskInstancesLiveData.getValue();
+
+                profileRepository.addXp(calculatedXp, allCurrentTasks, allCurrentInstances);
+
+                toastMessage.postValue(new Event<>("Task completed! +" + calculatedXp + " XP"));
+
+                if (task.isRecurring()) {
+                    TaskInstance instance = new TaskInstance(task.getId(), task.getUserId(), occurrenceDate, TaskStatus.COMPLETED, calculatedXp); // Koristi calculatedXp
+                    taskRepository.addTaskInstance(instance);
+                } else {
+                    Task taskToUpdate = new Task(task);
+                    taskToUpdate.setAwardedXp(calculatedXp);
+                    taskToUpdate.setStatus(TaskStatus.COMPLETED);
+                    taskToUpdate.setCompletedAt(new Date());
+                    taskRepository.updateTask(taskToUpdate);
+                }
 
                 allCompletedTasksForStats.removeObserver(this);
             }
         };
 
         allCompletedTasksForStats.observeForever(observer);
-
-        if (task.isRecurring()) {
-            TaskInstance instance = new TaskInstance(task.getId(), task.getUserId(), occurrenceDate, TaskStatus.COMPLETED);
-            taskRepository.addTaskInstance(instance);
-        } else {
-            Task taskToUpdate = new Task(task);
-            taskToUpdate.setStatus(TaskStatus.COMPLETED);
-            taskToUpdate.setCompletedAt(new Date());
-            taskRepository.updateTask(taskToUpdate);
-        }
     }
 
     private void combineDataForStats(boolean completedOnly) {
@@ -261,4 +272,5 @@ public class TaskViewModel extends ViewModel {
      public LiveData<List<Task>> getAllTasksAndInstancesForStats() {
         return allTasksAndInstancesForStats;
     }
+
 }
