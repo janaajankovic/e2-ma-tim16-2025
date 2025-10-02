@@ -64,6 +64,26 @@
         <action
             android:id="@+id/action_profile_to_equipmentDetail"
             app:destination="@id/equipmentDetailFragment" />
+        <action
+            android:id="@+id/action_profile_to_friends"
+            app:destination="@id/friendsHostFragment" />
+        <argument
+            android:name="userId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/friendsHostFragment"
+        android:name="com.example.habittrackerrpg.ui.friends.FriendsHostFragment"
+        android:label="Friends"
+        tools:layout="@layout/fragment_friends_host" >
+
+        <action
+            android:id="@+id/action_friends_to_profile"
+            app:destination="@id/nav_profile" />
+
     </fragment>
 
     <fragment
