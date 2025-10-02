@@ -64,7 +64,16 @@
         <action
             android:id="@+id/action_profile_to_equipmentDetail"
             app:destination="@id/equipmentDetailFragment" />
+        <action
+            android:id="@+id/action_profile_to_friends"
+            app:destination="@id/friendsHostFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/friendsHostFragment"
+        android:name="com.example.habittrackerrpg.ui.friends.FriendsHostFragment"
+        android:label="Friends"
+        tools:layout="@layout/fragment_friends_host" />
 
     <fragment
         android:id="@+id/equipmentDetailFragment"

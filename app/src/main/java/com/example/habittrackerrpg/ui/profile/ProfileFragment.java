@@ -78,6 +78,9 @@ public class ProfileFragment extends Fragment {
                 ((MainActivity) getActivity()).performLogout();
             }
         });
+        binding.buttonMyFriends.setOnClickListener(v -> {
+            Navigation.findNavController(v).navigate(R.id.action_profile_to_friends);
+        });
     }
 
     private void updateInventoryData() {
