@@ -9,6 +9,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.habittrackerrpg.data.model.FriendRequest;
+import androidx.navigation.Navigation;
+import com.example.habittrackerrpg.R;
 import com.example.habittrackerrpg.databinding.FragmentMyFriendsBinding;
 
 public class MyFriendsFragment extends Fragment {
@@ -52,6 +54,12 @@ public class MyFriendsFragment extends Fragment {
             public void onDecline(FriendRequest request) {
                 viewModel.declineFriendRequest(request);
             }
+        });
+        friendAdapter.setOnFriendClickListener(friend -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("userId", friend.getUserId());
+
+            Navigation.findNavController(requireView()).navigate(R.id.action_friends_to_profile, bundle);
         });
     }
 

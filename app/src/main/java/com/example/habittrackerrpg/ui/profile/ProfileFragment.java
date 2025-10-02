@@ -21,7 +21,10 @@ import com.example.habittrackerrpg.data.model.FriendRequest;
 import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.data.model.UserEquipment;
 import com.example.habittrackerrpg.databinding.FragmentProfileBinding;
+import com.example.habittrackerrpg.logic.AvatarHelper;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.WriterException;
@@ -55,6 +58,7 @@ public class ProfileFragment extends Fragment {
         profileViewModel.loadUser(userId);
         setupRecyclerView();
         setupObservers();
+
     }
 
     private void setupRecyclerView() {
@@ -109,7 +113,9 @@ public class ProfileFragment extends Fragment {
 
     private void updateUI(User user) {
         if (user == null) return;
-
+        if (user.getAvatarId() != null) {
+            binding.imageViewAvatar.setImageResource(AvatarHelper.getAvatarResourceId(user.getAvatarId()));
+        }
         String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         boolean isMyProfile = user.getId().equals(currentUid);
 

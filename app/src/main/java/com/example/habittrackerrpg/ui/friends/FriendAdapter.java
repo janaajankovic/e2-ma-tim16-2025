@@ -18,7 +18,13 @@ import java.util.List;
 public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendViewHolder> {
 
     private List<Friend> friends = new ArrayList<>();
-
+    private OnFriendClickListener listener;
+    public interface OnFriendClickListener {
+        void onFriendClick(Friend friend);
+    }
+    public void setOnFriendClickListener(OnFriendClickListener listener) {
+        this.listener = listener;
+    }
     @NonNull
     @Override
     public FriendViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -48,6 +54,12 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
             super(itemView);
             imageViewAvatar = itemView.findViewById(R.id.imageViewAvatar);
             textViewUsername = itemView.findViewById(R.id.textViewUsername);
+            itemView.setOnClickListener(v -> {
+                int position = getAdapterPosition();
+                if (listener != null && position != RecyclerView.NO_POSITION) {
+                    listener.onFriendClick(friends.get(position));
+                }
+            });
         }
 
         void bind(Friend friend) {

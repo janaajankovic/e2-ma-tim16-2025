@@ -28,9 +28,36 @@ public class ProfileRepository {
                 return;
             }
             if (snapshot != null && snapshot.exists()) {
-                userLiveData.setValue(snapshot.toObject(User.class));
+                User user = snapshot.toObject(User.class);
+                if (user != null) {
+                    // --- OVO JE KLJUČNA ISPRAVKA KOJA JE NEDOSTAJALA ---
+                    user.setId(snapshot.getId());
+                    userLiveData.setValue(user);
+                }
             }
         });
+        return userLiveData;
+    }
+
+    // Ovu metodu smo takođe koristili, dobro je da i ona bude ovde ispravljena
+    public MutableLiveData<User> getUserById(String userId) {
+        MutableLiveData<User> userLiveData = new MutableLiveData<>();
+        if (userId == null) {
+            userLiveData.setValue(null);
+            return userLiveData;
+        }
+        db.collection("users").document(userId)
+                .addSnapshotListener((snapshot, e) -> {
+                    if (snapshot != null && snapshot.exists()) {
+                        User user = snapshot.toObject(User.class);
+                        if (user != null) {
+                            user.setId(snapshot.getId());
+                            userLiveData.setValue(user);
+                        }
+                    } else {
+                        userLiveData.setValue(null);
+                    }
+                });
         return userLiveData;
     }
 
@@ -72,20 +99,5 @@ public class ProfileRepository {
                 .addOnFailureListener(e -> Log.w(TAG, "Transakcija neuspešna.", e));
     }
 
-    public LiveData<User> getUserById(String userId) {
-        MutableLiveData<User> userLiveData = new MutableLiveData<>();
-        db.collection("users").document(userId)
-                .addSnapshotListener((snapshot, e) -> {
-                    if (snapshot != null && snapshot.exists()) {
-                        User user = snapshot.toObject(User.class);
-                        if (user != null) {
-                            user.setId(snapshot.getId());
-                            userLiveData.setValue(user);
-                        }
-                    } else {
-                        userLiveData.setValue(null);
-                    }
-                });
-        return userLiveData;
-    }
+
 }

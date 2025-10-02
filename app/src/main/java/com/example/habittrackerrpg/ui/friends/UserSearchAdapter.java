@@ -1,6 +1,5 @@
 package com.example.habittrackerrpg.ui.friends;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,37 +9,23 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.habittrackerrpg.R;
-import com.example.habittrackerrpg.data.model.Friend;
-import com.example.habittrackerrpg.data.model.FriendRequest;
 import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.logic.AvatarHelper;
-
+import com.example.habittrackerrpg.logic.UserSearchResult;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserSearchAdapter extends RecyclerView.Adapter<UserSearchAdapter.SearchViewHolder> {
 
-    private List<User> users = new ArrayList<>();
-    private List<String> friendIds = new ArrayList<>();
-    private List<String> sentRequestReceiverIds = new ArrayList<>();
-    private String currentUserId;
+    private List<UserSearchResult> results = new ArrayList<>();
+    private OnAddFriendClickListener addFriendListener;
     private OnUserClickListener userClickListener;
 
-    private OnAddFriendClickListener listener;
-    public interface OnAddFriendClickListener {
-        void onAddFriendClick(User user);
-    }
+    public interface OnAddFriendClickListener { void onAddFriendClick(User user); }
+    public interface OnUserClickListener { void onUserClick(User user); }
 
-    public interface OnUserClickListener {
-        void onUserClick(User user);
-    }
-
-    public void setUserClickListener(OnUserClickListener listener) {
-        this.userClickListener = listener;
-    }
-    public void setListener(OnAddFriendClickListener listener) {
-        this.listener = listener;
-    }
+    public void setOnAddFriendClickListener(OnAddFriendClickListener listener) { this.addFriendListener = listener; }
+    public void setOnUserClickListener(OnUserClickListener listener) { this.userClickListener = listener; }
 
     @NonNull
     @Override
@@ -50,31 +35,16 @@ public class UserSearchAdapter extends RecyclerView.Adapter<UserSearchAdapter.Se
 
     @Override
     public void onBindViewHolder(@NonNull SearchViewHolder holder, int position) {
-        holder.bind(users.get(position));
+        holder.bind(results.get(position));
     }
 
     @Override
     public int getItemCount() {
-        return users.size();
+        return results.size();
     }
 
-    public void setUsers(List<User> users) {
-        this.users = users;
-        notifyDataSetChanged();
-    }
-    public void setData(List<User> users, List<Friend> friends, List<FriendRequest> sentRequests, String currentUserId) {
-        this.users = users;
-        this.currentUserId = currentUserId;
-        this.friendIds.clear();
-        for (Friend friend : friends) {
-            this.friendIds.add(friend.getUserId());
-        }
-
-        this.sentRequestReceiverIds.clear();
-        for (FriendRequest request : sentRequests) {
-            this.sentRequestReceiverIds.add(request.getReceiverId());
-        }
-
+    public void setResults(List<UserSearchResult> results) {
+        this.results = results;
         notifyDataSetChanged();
     }
 
@@ -88,40 +58,36 @@ public class UserSearchAdapter extends RecyclerView.Adapter<UserSearchAdapter.Se
             imageViewAvatar = itemView.findViewById(R.id.imageViewAvatar);
             textViewUsername = itemView.findViewById(R.id.textViewUsername);
             buttonAddFriend = itemView.findViewById(R.id.buttonAddFriend);
-            itemView.setOnClickListener(v -> {
-                if (userClickListener != null) {
-                    userClickListener.onUserClick(users.get(getAdapterPosition()));
-                }
-            });
         }
 
-        void bind(User user) {
-            textViewUsername.setText(user.getUsername());
+        void bind(UserSearchResult result) {
+            textViewUsername.setText(result.user.getUsername());
+            imageViewAvatar.setImageResource(AvatarHelper.getAvatarResourceId(result.user.getAvatarId()));
 
-            Context context = itemView.getContext();
-            int avatarResId = context.getResources().getIdentifier(user.getAvatarId(), "drawable", context.getPackageName());
-            imageViewAvatar.setImageResource(AvatarHelper.getAvatarResourceId(user.getAvatarId()));
-            if (user.getId().equals(currentUserId)) {
-                // Ako je korisnik u listi zapravo trenutno ulogovani korisnik
-                buttonAddFriend.setVisibility(View.GONE); // Sakrij dugme
-            } else if (friendIds.contains(user.getId())) {
-                buttonAddFriend.setVisibility(View.VISIBLE);
-                buttonAddFriend.setText("Friends");
-                buttonAddFriend.setEnabled(false);
-            } else if (sentRequestReceiverIds.contains(user.getId())) {
-                buttonAddFriend.setVisibility(View.VISIBLE);
-                buttonAddFriend.setText("Request Sent");
-                buttonAddFriend.setEnabled(false);
-            } else {
-                buttonAddFriend.setText("Add");
-                buttonAddFriend.setEnabled(true);
-                buttonAddFriend.setOnClickListener(v -> {
-                    if (listener != null) {
-                        listener.onAddFriendClick(user);
-                        buttonAddFriend.setText("Request Sent");
-                        buttonAddFriend.setEnabled(false);
-                    }
-                });
+            itemView.setOnClickListener(v -> {
+                if (userClickListener != null) userClickListener.onUserClick(result.user);
+            });
+
+            switch (result.status) {
+                case FRIENDS:
+                    buttonAddFriend.setText("Friends");
+                    buttonAddFriend.setEnabled(false);
+                    break;
+                case REQUEST_SENT:
+                    buttonAddFriend.setText("Request Sent");
+                    buttonAddFriend.setEnabled(false);
+                    break;
+                case NONE:
+                    buttonAddFriend.setText("Add");
+                    buttonAddFriend.setEnabled(true);
+                    buttonAddFriend.setOnClickListener(v -> {
+                        if (addFriendListener != null) {
+                            addFriendListener.onAddFriendClick(result.user);
+                            buttonAddFriend.setText("Request Sent");
+                            buttonAddFriend.setEnabled(false);
+                        }
+                    });
+                    break;
             }
         }
     }

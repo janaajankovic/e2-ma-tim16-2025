@@ -26,26 +26,38 @@ public class FriendsRepository {
 
     public LiveData<List<User>> searchUsersByUsername(String query) {
         MutableLiveData<List<User>> searchResults = new MutableLiveData<>();
-        if (query.isEmpty() || query.length() < 3) { // Pretraga kreće tek nakon 3 karaktera
+
+        // --- POČETAK DIJAGNOSTIKE ---
+        String debugTag = "SearchRepoDebug";
+        Log.d(debugTag, "searchUsersByUsername pozvan sa upitom: '" + query + "'");
+
+        if (query.isEmpty() || query.length() < 3) {
+            Log.d(debugTag, "Upit je prekratak, vraćam praznu listu.");
             searchResults.setValue(new ArrayList<>());
             return searchResults;
         }
 
+        Log.d(debugTag, "Pokrećem Firebase pretragu...");
         db.collection("users")
                 .whereGreaterThanOrEqualTo("username", query)
                 .whereLessThanOrEqualTo("username", query + "\uf8ff")
                 .limit(10)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
+                    Log.d(debugTag, "addOnSuccessListener se aktivirao. Broj pronađenih dokumenata: " + queryDocumentSnapshots.size());
                     List<User> users = new ArrayList<>();
                     for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
                         User user = doc.toObject(User.class);
                         user.setId(doc.getId());
                         users.add(user);
+                        Log.d(debugTag, " -> Dodat u listu: " + user.getUsername());
                     }
                     searchResults.setValue(users);
                 })
-                .addOnFailureListener(e -> Log.e(TAG, "User search failed", e));
+                .addOnFailureListener(e -> {
+                    Log.e(debugTag, "addOnFailureListener se aktivirao. Pretraga NIJE USPELA.", e);
+                });
+        // --- KRAJ DIJAGNOSTIKE ---
 
         return searchResults;
     }
@@ -137,12 +149,21 @@ public class FriendsRepository {
     }
 
     public LiveData<List<FriendRequest>> getSentFriendRequests() {
-        MutableLiveData<List<FriendRequest>> requestsLiveData = new MutableLiveData<>();
-        String uid = mAuth.getCurrentUser().getUid();
+        MutableLiveData<List<FriendRequest>> requestsLiveData = new MutableLiveData<>(new ArrayList<>());
+
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) {
+            return requestsLiveData;
+        }
+        String uid = currentUser.getUid();
 
         db.collectionGroup("friend_requests")
                 .whereEqualTo("senderId", uid)
                 .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        Log.e("FriendsRepository", "Greška pri dohvatanju poslatih zahteva.", e);
+                        return;
+                    }
                     if (snapshots != null) {
                         requestsLiveData.setValue(snapshots.toObjects(FriendRequest.class));
                     }
