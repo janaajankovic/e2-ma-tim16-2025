@@ -7,7 +7,7 @@ import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
-
+import android.content.Context;
 import com.example.habittrackerrpg.data.model.Alliance;
 import com.example.habittrackerrpg.data.model.AllianceInvite;
 import com.example.habittrackerrpg.data.model.Friend;
@@ -17,6 +17,7 @@ import com.example.habittrackerrpg.data.repository.AllianceRepository;
 import com.example.habittrackerrpg.data.repository.FriendsRepository;
 import com.example.habittrackerrpg.data.repository.ProfileRepository;
 import com.example.habittrackerrpg.logic.Event;
+import com.example.habittrackerrpg.logic.NotificationSender;
 import com.example.habittrackerrpg.logic.RelationshipStatus;
 import com.example.habittrackerrpg.logic.UserSearchResult;
 import java.util.ArrayList;
@@ -155,15 +156,19 @@ public class FriendsViewModel extends ViewModel {
         allianceRepository.createAlliance(allianceName, currentUser);
         toastMessage.setValue(new Event<>("Alliance '" + allianceName + "' created!"));
     }
-    public void sendAllianceInvite(Friend friendToInvite) {
+    public void sendAllianceInvite(Friend friendToInvite) { // VIŠE NE PRIMA CONTEXT
         Alliance alliance = currentAlliance.getValue();
         User currentUser = currentUserData.getValue();
 
         if (alliance == null || currentUser == null) {
-            toastMessage.setValue(new Event<>("Error: Alliance or user data not loaded."));
+            toastMessage.setValue(new Event<>("Error: Cannot send invite."));
             return;
         }
 
         allianceRepository.sendAllianceInvite(friendToInvite.getUserId(), alliance, currentUser.getUsername());
+        // LINIJA ZA SLANJE NOTIFIKACIJE JE OBRISANA ODAVDE
+    }
+    public LiveData<User> getCurrentUserData() {
+        return currentUserData;
     }
 }
