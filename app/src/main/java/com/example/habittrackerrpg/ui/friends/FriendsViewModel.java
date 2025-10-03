@@ -156,17 +156,17 @@ public class FriendsViewModel extends ViewModel {
         allianceRepository.createAlliance(allianceName, currentUser);
         toastMessage.setValue(new Event<>("Alliance '" + allianceName + "' created!"));
     }
-    public void sendAllianceInvite(Friend friendToInvite) { // VIŠE NE PRIMA CONTEXT
+    public void sendAllianceInvite(Context context, Friend friendToInvite) {
         Alliance alliance = currentAlliance.getValue();
         User currentUser = currentUserData.getValue();
 
         if (alliance == null || currentUser == null) {
-            toastMessage.setValue(new Event<>("Error: Cannot send invite."));
+            toastMessage.setValue(new Event<>("Error: Data not ready. Please try again."));
             return;
         }
 
-        allianceRepository.sendAllianceInvite(friendToInvite.getUserId(), alliance, currentUser.getUsername());
-        // LINIJA ZA SLANJE NOTIFIKACIJE JE OBRISANA ODAVDE
+        // Samo prosledi sve podatke repozitorijumu
+        allianceRepository.sendAllianceInviteAndNotify(context, friendToInvite.getUserId(), alliance, currentUser);
     }
     public LiveData<User> getCurrentUserData() {
         return currentUserData;

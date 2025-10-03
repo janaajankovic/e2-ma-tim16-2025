@@ -16,50 +16,40 @@ public class NotificationSender {
     private static final String ONESIGNAL_APP_ID = "549f71e7-ff87-46af-abc5-f49485ee5c64";
     private static final String ONESIGNAL_REST_API_KEY = "os_v2_app_kspxdz77q5dk7k6f6skil3s4mrou6j4dihyesauvn4y4j23r3z63yvqtxz5n6v4s43vlqxbadq5rsvwxvyh464ccxhpvc65vfvk76jq";
 
-    public static void sendNotificationToUser(Context context, String targetUserId, String title, String message) {
-        String TAG = "NotificationSenderDebug";
-
-        Log.d(TAG, "--- sendNotificationToUser POKRENUT ---");
-        Log.d(TAG, "ID primaoca: " + targetUserId);
-
+    public static void sendNotificationToUser(Context context, String targetUserId, String title, String message, String inviteId, String allianceId) {
         RequestQueue queue = Volley.newRequestQueue(context);
-
         try {
             JSONObject notificationContent = new JSONObject();
             notificationContent.put("app_id", ONESIGNAL_APP_ID);
+            notificationContent.put("include_external_user_ids", new JSONArray().put(targetUserId));
+            notificationContent.put("headings", new JSONObject().put("en", title));
+            notificationContent.put("contents", new JSONObject().put("en", message));
 
-            JSONArray targetUserIds = new JSONArray();
-            targetUserIds.put(targetUserId);
-            notificationContent.put("include_external_user_ids", targetUserIds);
+            JSONObject data = new JSONObject();
+            data.put("type", "ALLIANCE_INVITE");
+            data.put("inviteId", inviteId);
+            data.put("allianceId", allianceId);
+            notificationContent.put("data", data);
 
-            JSONObject headings = new JSONObject();
-            headings.put("en", title);
-            notificationContent.put("headings", headings);
+            // --- NOVO I KLJUČNO: Dodajemo dugmiće ---
+            JSONArray buttons = new JSONArray();
+            JSONObject acceptButton = new JSONObject();
+            acceptButton.put("id", "accept_button");
+            acceptButton.put("text", "Accept");
+            buttons.put(acceptButton);
+            JSONObject declineButton = new JSONObject();
+            declineButton.put("id", "decline_button");
+            declineButton.put("text", "Decline");
+            buttons.put(declineButton);
+            notificationContent.put("buttons", buttons);
 
-            JSONObject contents = new JSONObject();
-            contents.put("en", message);
-            notificationContent.put("contents", contents);
-
-            Log.d(TAG, "Kreiran JSON objekat za slanje: " + notificationContent.toString());
+            // --- NOVO: Notifikacija je "lepljiva" ---
+            // 'android_persistent' je pravi ključ za ovo u OneSignal API-ju
+            notificationContent.put("android_persistent", true);
 
             JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, ONESIGNAL_API_URL, notificationContent,
-                    response -> {
-                        Log.d(TAG, "--- SUCCESS! OneSignal je prihvatio zahtev. Odgovor: " + response.toString());
-                    },
-                    error -> {
-                        Log.e(TAG, "--- FAILURE! Greška pri slanju zahteva. ---");
-                        if (error.networkResponse != null) {
-                            Log.e(TAG, "Status kod: " + error.networkResponse.statusCode);
-                            try {
-                                String body = new String(error.networkResponse.data, "UTF-8");
-                                Log.e(TAG, "Odgovor sa servera: " + body);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            Log.e(TAG, "Greška (nema odgovora sa servera): " + error.getMessage());
-                        }
-                    }
+                    response -> Log.d("NotificationSender", "Successfully sent notification request."),
+                    error -> Log.e("NotificationSender", "Error sending notification: " + error)
             ) {
                 @Override
                 public java.util.Map<String, String> getHeaders() {
@@ -69,11 +59,9 @@ public class NotificationSender {
                     return headers;
                 }
             };
-
             queue.add(request);
-
         } catch (JSONException e) {
-            Log.e(TAG, "KRITIČNA GREŠKA pri kreiranju JSON objekta.", e);
+            e.printStackTrace();
         }
     }
 }
