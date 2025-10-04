@@ -1,6 +1,7 @@
 package com.example.habittrackerrpg.ui.bosses;
 
 import android.animation.Animator;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +15,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.habittrackerrpg.R;
 import com.example.habittrackerrpg.data.model.Boss;
 import com.example.habittrackerrpg.data.model.Task;
 import com.example.habittrackerrpg.data.model.TaskInstance;
@@ -120,7 +122,20 @@ public class BossFightFragment extends Fragment {
             binding.textAttacksRemaining.setText(String.format("%d / 5", attacks));
         });
 
-        bossFightViewModel.userPp.observe(getViewLifecycleOwner(), pp -> binding.textUserPp.setText(String.format("PP: %d", pp)));
+        bossFightViewModel.userPp.observe(getViewLifecycleOwner(), pp -> {
+            if (pp != null && pp > 0) {
+                binding.progressBarUserPp.setMax(pp.intValue());
+
+                binding.progressBarUserPp.setProgress(pp.intValue());
+
+                binding.textUserPpValue.setText(String.valueOf(pp));
+            } else {
+                binding.progressBarUserPp.setMax(100);
+                binding.progressBarUserPp.setProgress(0);
+                binding.textUserPpValue.setText("0");
+            }
+        });
+
         bossFightViewModel.hitChance.observe(getViewLifecycleOwner(), chance -> binding.textHitChance.setText(String.format("%d%%", chance)));
 
         bossFightViewModel.attackResultEvent.observe(getViewLifecycleOwner(), event -> {
@@ -149,6 +164,15 @@ public class BossFightFragment extends Fragment {
             if (isBattleFinished != null && isBattleFinished) {
 
                 if (!binding.lottieTreasureChest.isAnimating()) {
+                    try {
+                        final MediaPlayer mediaPlayer = MediaPlayer.create(getContext(), R.raw.chest_sound);
+
+                        mediaPlayer.setOnCompletionListener(mp -> mp.release());
+
+                        mediaPlayer.start();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                     binding.lottieTreasureChest.playAnimation();
                 }
             }

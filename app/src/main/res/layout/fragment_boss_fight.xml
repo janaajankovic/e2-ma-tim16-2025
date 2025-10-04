@@ -73,15 +73,50 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
-            android:id="@+id/text_user_pp"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:gravity="center"
-            android:drawableTop="@drawable/ic_swords"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
-            tools:text="PP: 50" />
+            android:paddingHorizontal="8dp">
+
+            <TextView
+                android:id="@+id/label_user_pp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="YOUR PP"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <ProgressBar
+                android:id="@+id/progress_bar_user_pp"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="12dp"
+                android:layout_marginTop="4dp"
+                android:progressTint="#2196F3"
+                android:scaleY="2"
+                app:layout_constraintTop_toBottomOf="@id/label_user_pp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                tools:max="100"
+                tools:progress="75" />
+
+            <TextView
+                android:id="@+id/text_user_pp_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                app:layout_constraintTop_toTopOf="@id/progress_bar_user_pp"
+                app:layout_constraintBottom_toBottomOf="@id/progress_bar_user_pp"
+                app:layout_constraintStart_toStartOf="@id/progress_bar_user_pp"
+                app:layout_constraintEnd_toEndOf="@id/progress_bar_user_pp"
+                tools:text="75" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <TextView
             android:id="@+id/text_attacks_remaining"

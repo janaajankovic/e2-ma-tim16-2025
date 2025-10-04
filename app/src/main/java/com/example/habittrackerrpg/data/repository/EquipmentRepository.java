@@ -141,4 +141,32 @@ public class EquipmentRepository {
                 .addOnSuccessListener(aVoid -> Log.d(TAG, "UserEquipment item successfully updated!"))
                 .addOnFailureListener(e -> Log.w(TAG, "Error updating UserEquipment item", e));
     }
+
+    public LiveData<List<UserEquipment>> getActiveUserInventory(String userId) {
+        MutableLiveData<List<UserEquipment>> inventoryLiveData = new MutableLiveData<>();
+        if (userId == null) {
+            inventoryLiveData.setValue(new ArrayList<>());
+            return inventoryLiveData;
+        }
+
+        db.collection("users").document(userId).collection("inventory")
+                .whereEqualTo("active", true) // <-- KLJUČNA LINIJA KODA
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        Log.w(TAG, "Active inventory listen failed.", e);
+                        return;
+                    }
+                    if (snapshots != null) {
+                        List<UserEquipment> inventory = new ArrayList<>();
+                        snapshots.forEach(doc -> {
+                            UserEquipment userEquipment = doc.toObject(UserEquipment.class);
+                            userEquipment.setId(doc.getId());
+                            inventory.add(userEquipment);
+                        });
+                        inventoryLiveData.setValue(inventory);
+                    }
+                });
+
+        return inventoryLiveData;
+    }
 }
