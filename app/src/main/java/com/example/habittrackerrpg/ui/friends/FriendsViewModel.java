@@ -165,10 +165,31 @@ public class FriendsViewModel extends ViewModel {
             return;
         }
 
-        // Samo prosledi sve podatke repozitorijumu
         allianceRepository.sendAllianceInviteAndNotify(context, friendToInvite.getUserId(), alliance, currentUser);
     }
     public LiveData<User> getCurrentUserData() {
         return currentUserData;
+    }
+    public void onLeaveAllianceClicked() {
+        User currentUser = currentUserData.getValue();
+        Alliance currentAlliance = this.currentAlliance.getValue();
+
+        if (currentUser != null && currentAlliance != null) {
+            allianceRepository.leaveAlliance(currentUser.getId(), currentAlliance.getId());
+            toastMessage.setValue(new Event<>("You have left the alliance."));
+        } else {
+            toastMessage.setValue(new Event<>("Error: Could not leave alliance."));
+        }
+    }
+
+    public void onDisbandAllianceClicked() {
+        Alliance currentAlliance = this.currentAlliance.getValue();
+
+        if (currentAlliance != null) {
+            allianceRepository.disbandAlliance(currentAlliance);
+            toastMessage.setValue(new Event<>("Alliance has been disbanded."));
+        } else {
+            toastMessage.setValue(new Event<>("Error: Could not disband alliance."));
+        }
     }
 }

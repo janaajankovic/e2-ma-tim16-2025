@@ -16,6 +16,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.habittrackerrpg.data.model.FriendRequest;
 import androidx.navigation.Navigation;
 import com.example.habittrackerrpg.R;
+import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.databinding.FragmentMyFriendsBinding;
 
 import java.util.ArrayList;
@@ -90,6 +91,7 @@ public class MyFriendsFragment extends Fragment {
                 friendAdapter.setFriends(friends);
             }
         });
+
         viewModel.getCurrentAlliance().observe(getViewLifecycleOwner(), alliance -> {
             if (alliance == null) {
                 binding.layoutInAlliance.setVisibility(View.GONE);
@@ -100,6 +102,36 @@ public class MyFriendsFragment extends Fragment {
                 binding.layoutInAlliance.setVisibility(View.VISIBLE);
                 binding.textViewAllianceName.setText(alliance.getName());
                 allianceMemberAdapter.setData(new ArrayList<>(alliance.getMembers().values()), alliance.getLeaderId());
+
+                User currentUser = viewModel.getCurrentUserData().getValue();
+
+                if (currentUser != null) {
+                    binding.buttonAllianceAction.setVisibility(View.VISIBLE);
+
+                    if (alliance.getLeaderId().equals(currentUser.getId())) {
+                        binding.buttonAllianceAction.setText("Disband Alliance");
+                        binding.buttonAllianceAction.setOnClickListener(v -> {
+                            new AlertDialog.Builder(requireContext())
+                                    .setTitle("Disband Alliance?")
+                                    .setMessage("Are you sure? This will remove all members and permanently delete the alliance.")
+                                    .setPositiveButton("Yes, Disband", (dialog, which) -> viewModel.onDisbandAllianceClicked())
+                                    .setNegativeButton("Cancel", null)
+                                    .show();
+                        });
+                    } else {
+                        binding.buttonAllianceAction.setText("Leave Alliance");
+                        binding.buttonAllianceAction.setOnClickListener(v -> {
+                            new AlertDialog.Builder(requireContext())
+                                    .setTitle("Leave Alliance?")
+                                    .setMessage("Are you sure you want to leave this alliance?")
+                                    .setPositiveButton("Yes, Leave", (dialog, which) -> viewModel.onLeaveAllianceClicked())
+                                    .setNegativeButton("Cancel", null)
+                                    .show();
+                        });
+                    }
+                } else {
+                    binding.buttonAllianceAction.setVisibility(View.GONE);
+                }
             }
         });
 

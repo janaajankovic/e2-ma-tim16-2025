@@ -143,4 +143,88 @@ public class AllianceRepository {
                 .delete()
                 .addOnSuccessListener(aVoid -> Log.d(TAG, "Successfully declined alliance invite."));
     }
+    public void acceptInviteAndLeaveOldAlliance(com.example.habittrackerrpg.data.model.AllianceInvite invite, com.example.habittrackerrpg.data.model.User userOnProfile) {
+        String uid = userOnProfile.getId();
+        String oldAllianceId = userOnProfile.getAllianceId();
+
+        if (oldAllianceId == null || oldAllianceId.isEmpty()) {
+            acceptAllianceInvite(invite, userOnProfile);
+            return;
+        }
+
+        DocumentReference newAllianceRef = db.collection("alliances").document(invite.getAllianceId());
+        DocumentReference oldAllianceRef = db.collection("alliances").document(oldAllianceId);
+        DocumentReference userRef = db.collection("users").document(uid);
+        DocumentReference inviteRef = userRef.collection("alliance_invites").document(invite.getId());
+        AllianceMember newMember = new AllianceMember(uid, userOnProfile.getUsername(), userOnProfile.getAvatarId());
+
+        WriteBatch batch = db.batch();
+
+        batch.update(oldAllianceRef, "members." + uid, com.google.firebase.firestore.FieldValue.delete());
+
+        batch.update(newAllianceRef, "members." + uid, newMember);
+
+        batch.update(userRef, "allianceId", invite.getAllianceId());
+
+        batch.delete(inviteRef);
+
+        batch.commit()
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "Successfully left old alliance and joined the new one."))
+                .addOnFailureListener(e -> Log.e(TAG, "Error switching alliances.", e));
+    }
+    public void disbandAllianceAndJoinNew(com.example.habittrackerrpg.data.model.AllianceInvite invite, com.example.habittrackerrpg.data.model.User leader, com.example.habittrackerrpg.data.model.Alliance oldAlliance) {
+        String leaderId = leader.getId();
+        String oldAllianceId = oldAlliance.getId();
+        String newAllianceId = invite.getAllianceId();
+
+        WriteBatch batch = db.batch();
+
+        for (String memberId : oldAlliance.getMembers().keySet()) {
+            if (!memberId.equals(leaderId)) {
+                DocumentReference memberRef = db.collection("users").document(memberId);
+                batch.update(memberRef, "allianceId", null);
+            }
+        }
+
+        DocumentReference oldAllianceRef = db.collection("alliances").document(oldAllianceId);
+        batch.delete(oldAllianceRef);
+
+        DocumentReference leaderRef = db.collection("users").document(leaderId);
+        batch.update(leaderRef, "allianceId", newAllianceId);
+
+        DocumentReference newAllianceRef = db.collection("alliances").document(newAllianceId);
+        AllianceMember leaderAsMember = new AllianceMember(leaderId, leader.getUsername(), leader.getAvatarId());
+        batch.update(newAllianceRef, "members." + leaderId, leaderAsMember);
+
+        DocumentReference inviteRef = leaderRef.collection("alliance_invites").document(invite.getId());
+        batch.delete(inviteRef);
+
+        batch.commit()
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "Successfully disbanded old alliance and joined the new one."))
+                .addOnFailureListener(e -> Log.e(TAG, "Error disbanding alliance.", e));
+    }
+    public void leaveAlliance(String userId, String allianceId) {
+        WriteBatch batch = db.batch();
+
+        DocumentReference allianceRef = db.collection("alliances").document(allianceId);
+        batch.update(allianceRef, "members." + userId, com.google.firebase.firestore.FieldValue.delete());
+
+        DocumentReference userRef = db.collection("users").document(userId);
+        batch.update(userRef, "allianceId", null);
+
+        batch.commit().addOnSuccessListener(aVoid -> Log.d(TAG, "User " + userId + " successfully left alliance " + allianceId));
+    }
+    public void disbandAlliance(Alliance alliance) {
+        WriteBatch batch = db.batch();
+
+        for (String memberId : alliance.getMembers().keySet()) {
+            DocumentReference memberRef = db.collection("users").document(memberId);
+            batch.update(memberRef, "allianceId", null);
+        }
+
+        DocumentReference allianceRef = db.collection("alliances").document(alliance.getId());
+        batch.delete(allianceRef);
+
+        batch.commit().addOnSuccessListener(aVoid -> Log.d(TAG, "Alliance " + alliance.getId() + " was successfully disbanded by leader."));
+    }
 }
