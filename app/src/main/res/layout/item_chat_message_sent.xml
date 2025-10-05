@@ -21,4 +21,14 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:text="Ovo je moja poruka. Ovo je moja poruka. Ovo je moja poruka." />
 
+    <TextView
+        android:id="@+id/textViewTimestamp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textSize="10sp"
+        app:layout_constraintEnd_toEndOf="@+id/textViewMessage"
+        app:layout_constraintTop_toBottomOf="@+id/textViewMessage"
+        tools:text="14:35" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

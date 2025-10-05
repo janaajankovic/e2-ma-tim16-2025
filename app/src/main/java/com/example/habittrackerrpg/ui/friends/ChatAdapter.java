@@ -11,8 +11,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.habittrackerrpg.R;
 import com.example.habittrackerrpg.data.model.Message;
 import com.google.firebase.auth.FirebaseAuth;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -23,6 +27,14 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public ChatAdapter() {
         this.currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+    }
+
+    private String formatTimestamp(Date date) {
+        if (date == null) {
+            return "";
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        return sdf.format(date);
     }
 
     public void setMessages(List<Message> newMessages) {
@@ -67,27 +79,36 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public int getItemCount() {
         return messages.size();
     }
-    static class SentMessageViewHolder extends RecyclerView.ViewHolder {
+    class SentMessageViewHolder extends RecyclerView.ViewHolder {
         TextView textViewMessage;
+        TextView textViewTimestamp;
+
         SentMessageViewHolder(@NonNull View itemView) {
             super(itemView);
             textViewMessage = itemView.findViewById(R.id.textViewMessage);
+            textViewTimestamp = itemView.findViewById(R.id.textViewTimestamp);
         }
         void bind(Message message) {
             textViewMessage.setText(message.getText());
+            textViewTimestamp.setText(formatTimestamp(message.getTimestamp()));
         }
     }
-    static class ReceivedMessageViewHolder extends RecyclerView.ViewHolder {
+
+    class ReceivedMessageViewHolder extends RecyclerView.ViewHolder {
         TextView textViewSender;
         TextView textViewMessage;
+        TextView textViewTimestamp;
+
         ReceivedMessageViewHolder(@NonNull View itemView) {
             super(itemView);
             textViewSender = itemView.findViewById(R.id.textViewSender);
             textViewMessage = itemView.findViewById(R.id.textViewMessage);
+            textViewTimestamp = itemView.findViewById(R.id.textViewTimestamp);
         }
         void bind(Message message) {
             textViewSender.setText(message.getSenderUsername());
             textViewMessage.setText(message.getText());
+            textViewTimestamp.setText(formatTimestamp(message.getTimestamp()));
         }
     }
 }

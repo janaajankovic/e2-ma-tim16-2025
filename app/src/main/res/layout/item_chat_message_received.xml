@@ -32,4 +32,14 @@
         app:layout_constraintTop_toBottomOf="@+id/textViewSender"
         tools:text="Ovo je poruka od nekog drugog. Ovo je poruka od nekog drugog." />
 
+    <TextView
+        android:id="@+id/textViewTimestamp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textSize="10sp"
+        app:layout_constraintStart_toStartOf="@+id/textViewMessage"
+        app:layout_constraintTop_toBottomOf="@+id/textViewMessage"
+        tools:text="14:36" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
