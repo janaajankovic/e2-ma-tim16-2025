@@ -8,6 +8,7 @@ import androidx.lifecycle.Transformations;
 import com.example.habittrackerrpg.data.model.Alliance;
 import com.example.habittrackerrpg.data.model.AllianceInvite;
 import com.example.habittrackerrpg.data.model.AllianceMember;
+import com.example.habittrackerrpg.data.model.Message;
 import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.logic.NotificationSender;
 import com.google.firebase.auth.FirebaseAuth;
@@ -256,5 +257,30 @@ public class AllianceRepository {
         batch.delete(allianceRef);
 
         batch.commit().addOnSuccessListener(aVoid -> Log.d(TAG, "Alliance " + alliance.getId() + " was successfully disbanded by leader."));
+    }
+    public LiveData<List<Message>> getChatMessages(String allianceId) {
+        MutableLiveData<List<Message>> messagesLiveData = new MutableLiveData<>();
+
+        db.collection("alliances").document(allianceId).collection("messages")
+                .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.ASCENDING)
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        Log.e(TAG, "Listen failed.", e);
+                        return;
+                    }
+
+                    if (snapshots != null) {
+                        List<Message> messages = snapshots.toObjects(Message.class);
+                        messagesLiveData.setValue(messages);
+                    }
+                });
+
+        return messagesLiveData;
+    }
+    public void sendMessage(String allianceId, Message message) {
+        db.collection("alliances").document(allianceId).collection("messages")
+                .add(message)
+                .addOnSuccessListener(documentReference -> Log.d(TAG, "Message sent successfully!"))
+                .addOnFailureListener(e -> Log.e(TAG, "Error sending message", e));
     }
 }

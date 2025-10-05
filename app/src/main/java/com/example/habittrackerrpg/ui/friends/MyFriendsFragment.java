@@ -47,6 +47,9 @@ public class MyFriendsFragment extends Fragment {
         binding.buttonInviteFriends.setOnClickListener(v -> {
             Navigation.findNavController(v).navigate(R.id.action_friends_to_invite);
         });
+        binding.buttonGoToChat.setOnClickListener(v -> {
+            Navigation.findNavController(v).navigate(R.id.nav_alliance_chat);
+        });
     }
 
     private void setupRecyclerViews() {

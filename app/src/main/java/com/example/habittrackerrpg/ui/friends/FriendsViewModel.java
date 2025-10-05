@@ -12,6 +12,7 @@ import com.example.habittrackerrpg.data.model.Alliance;
 import com.example.habittrackerrpg.data.model.AllianceInvite;
 import com.example.habittrackerrpg.data.model.Friend;
 import com.example.habittrackerrpg.data.model.FriendRequest;
+import com.example.habittrackerrpg.data.model.Message;
 import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.data.repository.AllianceRepository;
 import com.example.habittrackerrpg.data.repository.FriendsRepository;
@@ -40,6 +41,7 @@ public class FriendsViewModel extends ViewModel {
     private LiveData<List<User>> currentSearchSource = null;
     private final MutableLiveData<Event<String>> toastMessage = new MutableLiveData<>();
     private final LiveData<List<AllianceInvite>> pendingAllianceInvites;
+    private final LiveData<List<Message>> chatMessages;
     public FriendsViewModel() {
         this.friendsRepository = new FriendsRepository();
         this.profileRepository = new ProfileRepository();
@@ -62,6 +64,18 @@ public class FriendsViewModel extends ViewModel {
             }
             return allianceRepository.getPendingInvitesForAlliance(alliance.getId());
         });
+        this.chatMessages = Transformations.switchMap(currentAlliance, alliance -> {
+            if (alliance == null || alliance.getId() == null) {
+                MutableLiveData<List<Message>> emptyResult = new MutableLiveData<>();
+                emptyResult.setValue(new ArrayList<>());
+                return emptyResult;
+            }
+            return allianceRepository.getChatMessages(alliance.getId());
+        });
+    }
+
+    public LiveData<List<Message>> getChatMessages() {
+        return chatMessages;
     }
 
     public LiveData<List<AllianceInvite>> getPendingAllianceInvites() {
@@ -190,6 +204,15 @@ public class FriendsViewModel extends ViewModel {
             toastMessage.setValue(new Event<>("Alliance has been disbanded."));
         } else {
             toastMessage.setValue(new Event<>("Error: Could not disband alliance."));
+        }
+    }
+    public void sendMessage(String text) {
+        User currentUser = currentUserData.getValue();
+        Alliance currentAlliance = this.currentAlliance.getValue();
+
+        if (currentUser != null && currentAlliance != null && text != null && !text.isEmpty()) {
+            Message message = new Message(text, currentUser.getId(), currentUser.getUsername());
+            allianceRepository.sendMessage(currentAlliance.getId(), message);
         }
     }
 }
