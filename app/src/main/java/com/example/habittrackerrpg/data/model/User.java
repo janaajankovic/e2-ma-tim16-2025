@@ -21,6 +21,7 @@ public class User {
     private int lastStageHitChance;
 
     private int lastBossFightAttemptLevel;
+    private String allianceId;
 
     public User() {
     }
@@ -62,6 +63,10 @@ public class User {
     public int getHighestBossDefeatedLevel() {
         return highestBossDefeatedLevel;
     }
+
+    public String getAllianceId() { return allianceId; }
+    public void setAllianceId(String allianceId) { this.allianceId = allianceId; }
+
 
     public void setHighestBossDefeatedLevel(int highestBossDefeatedLevel) {
         this.highestBossDefeatedLevel = highestBossDefeatedLevel;

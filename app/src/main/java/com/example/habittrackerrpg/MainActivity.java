@@ -12,6 +12,16 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import android.content.Intent;
+import android.os.Bundle;
+import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
+
+import com.example.habittrackerrpg.data.model.Alliance;
+import com.example.habittrackerrpg.data.repository.AllianceRepository;
+import com.example.habittrackerrpg.data.repository.ProfileRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import com.example.habittrackerrpg.databinding.LevelProgressHeaderBinding;
 import com.example.habittrackerrpg.ui.auth.AuthViewModel;
@@ -25,11 +35,13 @@ public class MainActivity extends AppCompatActivity {
     private ProfileViewModel profileViewModel;
     private NavController navController;
     private LevelProgressHeaderBinding headerBinding;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        db = FirebaseFirestore.getInstance();
 
         authViewModel = new ViewModelProvider(this).get(AuthViewModel.class);
         profileViewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
@@ -63,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
                 headerBinding.progressBarXp.setProgress((int) result.xpForCurrentLevel);
             }
         });
+        handleIncomingIntent(getIntent());
     }
 
     @Override
@@ -89,5 +102,96 @@ public class MainActivity extends AppCompatActivity {
         authViewModel.logoutUser();
         startActivity(new Intent(MainActivity.this, AuthenticationActivity.class));
         finish();
+    }
+    private void handleIncomingIntent(Intent intent) {
+        if (intent == null || !"HANDLE_ALLIANCE_INVITE".equals(intent.getStringExtra("action"))) {
+            return;
+        }
+        String inviteId = intent.getStringExtra("inviteId");
+        if (inviteId == null) return;
+        getIntent().removeExtra("action");
+
+        AllianceRepository allianceRepository = new AllianceRepository();
+        ProfileRepository profileRepository = new ProfileRepository();
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        profileRepository.getUserById(uid).observeForever(new androidx.lifecycle.Observer<com.example.habittrackerrpg.data.model.User>() {
+            @Override
+            public void onChanged(com.example.habittrackerrpg.data.model.User user) {
+                profileRepository.getUserById(uid).removeObserver(this);
+
+                if (user == null) return;
+
+                boolean isAlreadyInAlliance = user.getAllianceId() != null && !user.getAllianceId().isEmpty();
+
+                if (!isAlreadyInAlliance) {
+                    FirebaseFirestore.getInstance().collection("users").document(uid).collection("alliance_invites").document(inviteId).get()
+                            .addOnSuccessListener(inviteDoc -> {
+                                if (inviteDoc.exists()) {
+                                    var invite = inviteDoc.toObject(com.example.habittrackerrpg.data.model.AllianceInvite.class);
+                                    if (invite != null) {
+                                        invite.setId(inviteDoc.getId());
+                                        allianceRepository.acceptAllianceInvite(MainActivity.this,invite, user);
+                                        Toast.makeText(MainActivity.this, "You have joined the alliance!", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+                    return;
+                }
+
+                db.collection("alliances").document(user.getAllianceId()).get().addOnSuccessListener(allianceDoc -> {
+                    if (!allianceDoc.exists()) return;
+
+                    Alliance oldAlliance = allianceDoc.toObject(Alliance.class);
+                    oldAlliance.setId(allianceDoc.getId());
+
+                    FirebaseFirestore.getInstance().collection("users").document(uid).collection("alliance_invites").document(inviteId).get()
+                            .addOnSuccessListener(inviteDoc -> {
+                                if (inviteDoc.exists()) {
+                                    var invite = inviteDoc.toObject(com.example.habittrackerrpg.data.model.AllianceInvite.class);
+                                    if (invite != null) {
+                                        invite.setId(inviteDoc.getId());
+                                        if (oldAlliance.getLeaderId().equals(user.getId())) {
+                                            showDisbandConfirmationDialog(invite, user, oldAlliance, allianceRepository);
+                                        } else {
+                                            showLeaveConfirmationDialog(invite, user, allianceRepository);
+                                        }
+                                    }
+                                }
+                            });
+                });
+            }
+        });
+    }
+
+    private void showLeaveConfirmationDialog(com.example.habittrackerrpg.data.model.AllianceInvite invite, com.example.habittrackerrpg.data.model.User user, AllianceRepository repo) {
+        new AlertDialog.Builder(this)
+                .setTitle("Join new alliance?")
+                .setMessage("You are already in an alliance. Do you want to leave it to join '" + invite.getAllianceName() + "'?")
+                .setPositiveButton("Yes, leave and join", (dialog, which) -> {
+                    repo.acceptInviteAndLeaveOldAlliance(this, invite, user);
+                    Toast.makeText(this, "You have joined " + invite.getAllianceName(), Toast.LENGTH_LONG).show();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .setCancelable(false)
+                .show();
+    }
+    private void showDisbandConfirmationDialog(com.example.habittrackerrpg.data.model.AllianceInvite invite, com.example.habittrackerrpg.data.model.User user, com.example.habittrackerrpg.data.model.Alliance oldAlliance, AllianceRepository repo) {
+        new AlertDialog.Builder(this)
+                .setTitle("You are a Leader!")
+                .setMessage("To join '" + invite.getAllianceName() + "', you must disband your current alliance. All members will be removed. Do you want to proceed?")
+                .setPositiveButton("Yes, disband and join", (dialog, which) -> {
+                    repo.disbandAllianceAndJoinNew(this, invite, user, oldAlliance);
+                    Toast.makeText(this, "Alliance disbanded. You have joined " + invite.getAllianceName(), Toast.LENGTH_LONG).show();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .setCancelable(false)
+                .show();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleIncomingIntent(intent);
     }
 }

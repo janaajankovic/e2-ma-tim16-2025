@@ -9,6 +9,7 @@ import com.example.habittrackerrpg.data.model.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.onesignal.OneSignal;
 
 public class AuthRepository {
     private static final String TAG = "AuthRepository";
@@ -58,6 +59,7 @@ public class AuthRepository {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
                             if (user.isEmailVerified()) {
+                                OneSignal.login(user.getUid());
                                 success.setValue(true);
                                 isUnverifiedAccount.setValue(false);
                             } else {
@@ -76,6 +78,7 @@ public class AuthRepository {
     }
 
     public void logoutUser() {
+        OneSignal.logout();
         mAuth.signOut();
     }
 
