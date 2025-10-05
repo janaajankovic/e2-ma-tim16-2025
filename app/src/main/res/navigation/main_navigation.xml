@@ -93,6 +93,9 @@
         <action
             android:id="@+id/action_friends_to_invite"
             app:destination="@id/inviteFriendsFragment" />
+        <action
+            android:id="@+id/action_friends_to_chat"
+            app:destination="@id/nav_alliance_chat" />
 
     </fragment>
 
@@ -101,6 +104,12 @@
         android:name="com.example.habittrackerrpg.ui.friends.InviteFriendsFragment"
         android:label="Invite Friends"
         tools:layout="@layout/fragment_invite_friends" />
+
+    <fragment
+        android:id="@+id/nav_alliance_chat"
+        android:name="com.example.habittrackerrpg.ui.friends.AllianceChatFragment"
+        android:label="Alliance Chat"
+        tools:layout="@layout/fragment_alliance_chat" />
 
     <fragment
         android:id="@+id/equipmentDetailFragment"

@@ -34,6 +34,7 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Title"
                 tools:text="The Champions" />
 
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -57,6 +58,12 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="Invite Friends" />
+            <Button
+                android:id="@+id/buttonGoToChat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Alliance Chat" />
             <Button
                 android:id="@+id/button_alliance_action"
                 style="?android:attr/buttonBarStyle"
