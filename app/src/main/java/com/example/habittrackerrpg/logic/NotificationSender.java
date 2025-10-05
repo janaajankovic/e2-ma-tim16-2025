@@ -31,7 +31,6 @@ public class NotificationSender {
             data.put("allianceId", allianceId);
             notificationContent.put("data", data);
 
-            // --- NOVO I KLJUČNO: Dodajemo dugmiće ---
             JSONArray buttons = new JSONArray();
             JSONObject acceptButton = new JSONObject();
             acceptButton.put("id", "accept_button");
@@ -43,12 +42,36 @@ public class NotificationSender {
             buttons.put(declineButton);
             notificationContent.put("buttons", buttons);
 
-            // --- NOVO: Notifikacija je "lepljiva" ---
-            // 'android_persistent' je pravi ključ za ovo u OneSignal API-ju
             notificationContent.put("android_persistent", true);
 
             JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, ONESIGNAL_API_URL, notificationContent,
                     response -> Log.d("NotificationSender", "Successfully sent notification request."),
+                    error -> Log.e("NotificationSender", "Error sending notification: " + error)
+            ) {
+                @Override
+                public java.util.Map<String, String> getHeaders() {
+                    java.util.Map<String, String> headers = new java.util.HashMap<>();
+                    headers.put("Content-Type", "application/json; charset=utf-8");
+                    headers.put("Authorization", "Basic " + ONESIGNAL_REST_API_KEY);
+                    return headers;
+                }
+            };
+            queue.add(request);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+    public static void sendSimpleNotification(Context context, String targetUserId, String title, String message) {
+        RequestQueue queue = Volley.newRequestQueue(context);
+        try {
+            JSONObject notificationContent = new JSONObject();
+            notificationContent.put("app_id", ONESIGNAL_APP_ID);
+            notificationContent.put("include_external_user_ids", new JSONArray().put(targetUserId));
+            notificationContent.put("headings", new JSONObject().put("en", title));
+            notificationContent.put("contents", new JSONObject().put("en", message));
+
+            JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, ONESIGNAL_API_URL, notificationContent,
+                    response -> Log.d("NotificationSender", "Successfully sent simple notification."),
                     error -> Log.e("NotificationSender", "Error sending notification: " + error)
             ) {
                 @Override

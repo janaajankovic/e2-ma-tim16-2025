@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
                                     var invite = inviteDoc.toObject(com.example.habittrackerrpg.data.model.AllianceInvite.class);
                                     if (invite != null) {
                                         invite.setId(inviteDoc.getId());
-                                        allianceRepository.acceptAllianceInvite(invite, user);
+                                        allianceRepository.acceptAllianceInvite(MainActivity.this,invite, user);
                                         Toast.makeText(MainActivity.this, "You have joined the alliance!", Toast.LENGTH_SHORT).show();
                                     }
                                 }
@@ -169,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
                 .setTitle("Join new alliance?")
                 .setMessage("You are already in an alliance. Do you want to leave it to join '" + invite.getAllianceName() + "'?")
                 .setPositiveButton("Yes, leave and join", (dialog, which) -> {
-                    repo.acceptInviteAndLeaveOldAlliance(invite, user);
+                    repo.acceptInviteAndLeaveOldAlliance(this, invite, user);
                     Toast.makeText(this, "You have joined " + invite.getAllianceName(), Toast.LENGTH_LONG).show();
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
@@ -181,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
                 .setTitle("You are a Leader!")
                 .setMessage("To join '" + invite.getAllianceName() + "', you must disband your current alliance. All members will be removed. Do you want to proceed?")
                 .setPositiveButton("Yes, disband and join", (dialog, which) -> {
-                    repo.disbandAllianceAndJoinNew(invite, user, oldAlliance);
+                    repo.disbandAllianceAndJoinNew(this, invite, user, oldAlliance);
                     Toast.makeText(this, "Alliance disbanded. You have joined " + invite.getAllianceName(), Toast.LENGTH_LONG).show();
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())

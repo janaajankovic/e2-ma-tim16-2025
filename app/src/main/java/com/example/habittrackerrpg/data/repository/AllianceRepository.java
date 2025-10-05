@@ -122,7 +122,7 @@ public class AllianceRepository {
         return invitesLiveData;
     }
 
-    public void acceptAllianceInvite(AllianceInvite invite, User userOnProfile) {
+    public void acceptAllianceInvite(Context context, AllianceInvite invite, User userOnProfile) {
         String uid = mAuth.getCurrentUser().getUid();
         DocumentReference allianceRef = db.collection("alliances").document(invite.getAllianceId());
         DocumentReference userRef = db.collection("users").document(uid);
@@ -133,7 +133,18 @@ public class AllianceRepository {
         batch.update(userRef, "allianceId", invite.getAllianceId());
         batch.delete(inviteRef);
         batch.commit()
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "Successfully accepted alliance invite."))
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Successfully accepted alliance invite.");
+
+                    db.collection("alliances").document(invite.getAllianceId()).get().addOnSuccessListener(doc -> {
+                        if (doc.exists()) {
+                            String leaderId = doc.getString("leaderId");
+                            String title = "New Member!";
+                            String message = userOnProfile.getUsername() + " has joined your alliance '" + invite.getAllianceName() + "'.";
+                            NotificationSender.sendSimpleNotification(context, leaderId, title, message);
+                        }
+                    });
+                })
                 .addOnFailureListener(e -> Log.e(TAG, "Error accepting alliance invite.", e));
     }
 
@@ -143,12 +154,12 @@ public class AllianceRepository {
                 .delete()
                 .addOnSuccessListener(aVoid -> Log.d(TAG, "Successfully declined alliance invite."));
     }
-    public void acceptInviteAndLeaveOldAlliance(com.example.habittrackerrpg.data.model.AllianceInvite invite, com.example.habittrackerrpg.data.model.User userOnProfile) {
+    public void acceptInviteAndLeaveOldAlliance(Context context, AllianceInvite invite, User userOnProfile) {
         String uid = userOnProfile.getId();
         String oldAllianceId = userOnProfile.getAllianceId();
 
         if (oldAllianceId == null || oldAllianceId.isEmpty()) {
-            acceptAllianceInvite(invite, userOnProfile);
+            acceptAllianceInvite(context, invite, userOnProfile);
             return;
         }
 
@@ -161,18 +172,26 @@ public class AllianceRepository {
         WriteBatch batch = db.batch();
 
         batch.update(oldAllianceRef, "members." + uid, com.google.firebase.firestore.FieldValue.delete());
-
         batch.update(newAllianceRef, "members." + uid, newMember);
-
         batch.update(userRef, "allianceId", invite.getAllianceId());
-
         batch.delete(inviteRef);
 
         batch.commit()
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "Successfully left old alliance and joined the new one."))
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Successfully left old alliance and joined the new one.");
+
+                    db.collection("alliances").document(invite.getAllianceId()).get().addOnSuccessListener(doc -> {
+                        if (doc.exists()) {
+                            String leaderId = doc.getString("leaderId");
+                            String title = "New Member!";
+                            String message = userOnProfile.getUsername() + " has joined your alliance '" + invite.getAllianceName() + "'.";
+                            NotificationSender.sendSimpleNotification(context, leaderId, title, message);
+                        }
+                    });
+                })
                 .addOnFailureListener(e -> Log.e(TAG, "Error switching alliances.", e));
     }
-    public void disbandAllianceAndJoinNew(com.example.habittrackerrpg.data.model.AllianceInvite invite, com.example.habittrackerrpg.data.model.User leader, com.example.habittrackerrpg.data.model.Alliance oldAlliance) {
+    public void disbandAllianceAndJoinNew(Context context, com.example.habittrackerrpg.data.model.AllianceInvite invite, com.example.habittrackerrpg.data.model.User leader, com.example.habittrackerrpg.data.model.Alliance oldAlliance) {
         String leaderId = leader.getId();
         String oldAllianceId = oldAlliance.getId();
         String newAllianceId = invite.getAllianceId();
@@ -200,7 +219,18 @@ public class AllianceRepository {
         batch.delete(inviteRef);
 
         batch.commit()
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "Successfully disbanded old alliance and joined the new one."))
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Successfully disbanded old alliance and joined the new one.");
+
+                    db.collection("alliances").document(newAllianceId).get().addOnSuccessListener(doc -> {
+                        if (doc.exists()) {
+                            String newLeaderId = doc.getString("leaderId");
+                            String title = "New Member!";
+                            String message = leader.getUsername() + " has joined your alliance '" + invite.getAllianceName() + "'.";
+                            NotificationSender.sendSimpleNotification(context, newLeaderId, title, message);
+                        }
+                    });
+                })
                 .addOnFailureListener(e -> Log.e(TAG, "Error disbanding alliance.", e));
     }
     public void leaveAlliance(String userId, String allianceId) {
