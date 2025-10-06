@@ -87,7 +87,7 @@ public class EquipmentRepository {
         return inventoryLiveData;
     }
 
-    public void buyItem(User currentUserData, EquipmentItem itemToBuy, BuyItemCallback callback) {
+    public void buyItem(User currentUserData, EquipmentItem itemToBuy, long calculatedPrice, BuyItemCallback callback) {
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null) {
             callback.onResult(false, "User not logged in.");
@@ -99,11 +99,11 @@ public class EquipmentRepository {
         DocumentReference newInventoryItemRef = userRef.collection("inventory").document();
 
         db.runTransaction(transaction -> {
-            if (currentUserData.getCoins() < itemToBuy.getCost()) {
+            if (currentUserData.getCoins() < calculatedPrice) {
                 throw new IllegalStateException("Not enough coins.");
             }
 
-            long newCoinBalance = currentUserData.getCoins() - itemToBuy.getCost();
+            long newCoinBalance = currentUserData.getCoins() - calculatedPrice;
             transaction.update(userRef, "coins", newCoinBalance);
 
             UserEquipment newInventoryItem = new UserEquipment(uid, itemToBuy.getId(), itemToBuy.getType());
@@ -141,5 +141,19 @@ public class EquipmentRepository {
                 .set(itemToUpdate)
                 .addOnSuccessListener(aVoid -> Log.d(TAG, "UserEquipment item successfully updated!"))
                 .addOnFailureListener(e -> Log.w(TAG, "Error updating UserEquipment item", e));
+    }
+
+    public void deleteUserEquipment(String userEquipmentId) {
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null || userEquipmentId == null) {
+            Log.e(TAG, "Cannot delete item. User not logged in or item has no ID.");
+            return;
+        }
+        String uid = firebaseUser.getUid();
+
+        db.collection("users").document(uid).collection("inventory").document(userEquipmentId)
+                .delete()
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "UserEquipment item successfully deleted!"))
+                .addOnFailureListener(e -> Log.w(TAG, "Error deleting UserEquipment item", e));
     }
 }

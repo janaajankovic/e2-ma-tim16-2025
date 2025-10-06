@@ -70,4 +70,17 @@ public class ProfileRepository {
                 }).addOnSuccessListener(aVoid -> Log.d(TAG, "Transakcija uspešna!"))
                 .addOnFailureListener(e -> Log.w(TAG, "Transakcija neuspešna.", e));
     }
+
+    public void updateUser(User user) {
+        if (mAuth.getCurrentUser() == null) {
+            Log.e(TAG, "Cannot update user. User not logged in.");
+            return;
+        }
+        String uid = mAuth.getCurrentUser().getUid();
+
+        db.collection("users").document(uid)
+                .set(user)
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "User profile successfully updated!"))
+                .addOnFailureListener(e -> Log.w(TAG, "Error updating user profile", e));
+    }
 }

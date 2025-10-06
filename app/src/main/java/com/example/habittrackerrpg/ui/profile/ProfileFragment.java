@@ -52,17 +52,13 @@ public class ProfileFragment extends Fragment {
         setupObservers();
     }
 
-    // NOVO: Metoda za podešavanje RecyclerView-a
     private void setupRecyclerView() {
         inventoryAdapter = new InventoryAdapter();
-        // Koristimo ID koji smo definisali u XML-u
         binding.recyclerViewInventory.setAdapter(inventoryAdapter);
         inventoryAdapter.setOnItemClickListener(userEquipment -> {
-            // Kreiramo bundle da pošaljemo ID predmeta
             Bundle bundle = new Bundle();
             bundle.putString("userEquipmentId", userEquipment.getId());
 
-            // Pokrećemo navigaciju ka detaljima
             Navigation.findNavController(requireView()).navigate(R.id.action_profile_to_equipmentDetail, bundle);
         });
     }
@@ -70,8 +66,12 @@ public class ProfileFragment extends Fragment {
     private void setupObservers() {
         profileViewModel.getUser().observe(getViewLifecycleOwner(), this::updateUI);
 
-        profileViewModel.getUserInventory().observe(getViewLifecycleOwner(), inventory -> updateInventoryData());
-        profileViewModel.getShopItems().observe(getViewLifecycleOwner(), shopItems -> updateInventoryData());
+        profileViewModel.getUserInventory().observe(getViewLifecycleOwner(), inventory -> {
+            updateInventoryData();
+        });
+        profileViewModel.getShopItems().observe(getViewLifecycleOwner(), shopItems -> {
+            updateInventoryData();
+        });
 
         binding.buttonLogout.setOnClickListener(v -> {
             if (getActivity() instanceof MainActivity) {
@@ -85,7 +85,6 @@ public class ProfileFragment extends Fragment {
         List<EquipmentItem> shopItems = profileViewModel.getShopItems().getValue();
 
         if (inventory != null && shopItems != null) {
-            // Kreiramo mapu definicija da bi adapter znao imena i opise predmeta
             Map<String, EquipmentItem> definitions = new HashMap<>();
             for (EquipmentItem item : shopItems) {
                 definitions.put(item.getId(), item);
@@ -101,7 +100,7 @@ public class ProfileFragment extends Fragment {
         binding.textViewTitle.setText(user.getTitle());
         binding.textViewLevel.setText(getString(R.string.level_text, user.getLevel()));
         binding.textViewXp.setText(getString(R.string.xp_text, user.getXp()));
-        binding.textViewPp.setText(getString(R.string.pp_text, user.getPp()));
+        binding.textViewPp.setText(getString(R.string.pp_text, user.getTotalPp()));
         binding.textViewCoins.setText(getString(R.string.coins_text, user.getCoins()));
 
         // QR kod se generiše samo ako imamo korisničko ime
