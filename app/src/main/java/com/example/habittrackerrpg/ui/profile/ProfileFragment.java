@@ -61,6 +61,31 @@ public class ProfileFragment extends Fragment {
 
     }
 
+    private void setupObservers() {
+        profileViewModel.getDisplayedUserData().observe(getViewLifecycleOwner(), this::updateUI);
+        profileViewModel.getFriendsList().observe(getViewLifecycleOwner(), friends -> {
+            updateUI(profileViewModel.getDisplayedUserData().getValue());
+        });
+        profileViewModel.getUserInventory().observe(getViewLifecycleOwner(), inventory -> {
+            updateInventoryData();
+        });
+        profileViewModel.getShopItems().observe(getViewLifecycleOwner(), shopItems -> {
+            updateInventoryData();
+        });
+        profileViewModel.getSentFriendRequests().observe(getViewLifecycleOwner(), requests -> {
+            updateUI(profileViewModel.getDisplayedUserData().getValue());
+        });
+
+        binding.buttonLogout.setOnClickListener(v -> {
+            if (getActivity() instanceof MainActivity) {
+                ((MainActivity) getActivity()).performLogout();
+            }
+        });
+        binding.buttonMyFriends.setOnClickListener(v -> {
+            Navigation.findNavController(v).navigate(R.id.action_profile_to_friends);
+        });
+    }
+
     private void setupRecyclerView() {
         inventoryAdapter = new InventoryAdapter();
         binding.recyclerViewInventory.setAdapter(inventoryAdapter);
@@ -72,31 +97,7 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    private void setupObservers() {
-        profileViewModel.getDisplayedUserData().observe(getViewLifecycleOwner(), this::updateUI);
-        profileViewModel.getFriendsList().observe(getViewLifecycleOwner(), friends -> {
-            updateUI(profileViewModel.getDisplayedUserData().getValue());
-        });
 
-        profileViewModel.getSentFriendRequests().observe(getViewLifecycleOwner(), requests -> {
-            updateUI(profileViewModel.getDisplayedUserData().getValue());
-        });
-
-        profileViewModel.getUserInventory().observe(getViewLifecycleOwner(), inventory -> {
-            updateUI(profileViewModel.getDisplayedUserData().getValue());
-        });
-        profileViewModel.getShopItems().observe(getViewLifecycleOwner(), shopItems -> {
-            updateUI(profileViewModel.getDisplayedUserData().getValue());
-        });
-        binding.buttonLogout.setOnClickListener(v -> {
-            if (getActivity() instanceof MainActivity) {
-                ((MainActivity) getActivity()).performLogout();
-            }
-        });
-        binding.buttonMyFriends.setOnClickListener(v -> {
-            Navigation.findNavController(v).navigate(R.id.action_profile_to_friends);
-        });
-    }
 
     private void updateInventoryData() {
         List<UserEquipment> inventory = profileViewModel.getUserInventory().getValue();
@@ -124,7 +125,11 @@ public class ProfileFragment extends Fragment {
         binding.textViewTitle.setText(user.getTitle());
         binding.textViewLevel.setText(getString(R.string.level_text, user.getLevel()));
         binding.textViewXp.setText(getString(R.string.xp_text, user.getXp()));
+        binding.textViewPp.setText(getString(R.string.pp_text, user.getTotalPp()));
+        binding.textViewCoins.setText(getString(R.string.coins_text, user.getCoins()));
+
         binding.textViewBadges.setText(getString(R.string.profile_badges) + " 0");
+
 
         binding.imageViewQrCode.setVisibility(View.VISIBLE);
         if (user.getUsername() != null && !user.getUsername().isEmpty()) {

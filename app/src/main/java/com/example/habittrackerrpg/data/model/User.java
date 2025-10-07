@@ -15,12 +15,17 @@ public class User {
     private long pp;
     private long coins;
     private String title;
+    private double permanentPpBonusPercent;
+    private long totalPp;
+    private double totalAttackChanceBonus;
+    private int totalExtraAttacks;
     private int highestBossDefeatedLevel;
 
     private Date lastLevelUpTimestamp;
     private int lastStageHitChance;
 
     private int lastBossFightAttemptLevel;
+    private String allianceId;
 
     public User() {
     }
@@ -33,6 +38,13 @@ public class User {
         this.pp = 0;
         this.coins = 0;
         this.title = "Beginner";
+        this.permanentPpBonusPercent = 0.0;
+        this.totalPp = 0;
+        this.totalAttackChanceBonus = 0.0;
+        this.totalExtraAttacks = 0;
+
+
+
         this.highestBossDefeatedLevel = 0;
         this.lastLevelUpTimestamp = new Date();
     }
@@ -58,10 +70,23 @@ public class User {
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
+    public double getPermanentPpBonusPercent() { return permanentPpBonusPercent; }
+    public void setPermanentPpBonusPercent(double permanentPpBonusPercent) { this.permanentPpBonusPercent = permanentPpBonusPercent; }
+
+    public long getTotalPp() { return totalPp; }
+    public void setTotalPp(long totalPp) { this.totalPp = totalPp; }
+    public double getTotalAttackChanceBonus() { return totalAttackChanceBonus; }
+    public void setTotalAttackChanceBonus(double totalAttackChanceBonus) { this.totalAttackChanceBonus = totalAttackChanceBonus; }
+    public int getTotalExtraAttacks() { return totalExtraAttacks; }
+    public void setTotalExtraAttacks(int totalExtraAttacks) { this.totalExtraAttacks = totalExtraAttacks; }
 
     public int getHighestBossDefeatedLevel() {
         return highestBossDefeatedLevel;
     }
+
+    public String getAllianceId() { return allianceId; }
+    public void setAllianceId(String allianceId) { this.allianceId = allianceId; }
+
 
     public void setHighestBossDefeatedLevel(int highestBossDefeatedLevel) {
         this.highestBossDefeatedLevel = highestBossDefeatedLevel;

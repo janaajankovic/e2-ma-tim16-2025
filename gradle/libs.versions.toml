@@ -12,6 +12,7 @@ firebaseAppcheck = "19.0.1"
 firebaseAppcheckDebug = "19.0.1"
 firebaseFirestore = "26.0.1"
 navigation = "2.7.7"
+onesignalPlugin = "0.14.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -31,4 +32,5 @@ colorpicker = { group = "com.github.dhaval2404", name = "colorpicker", version =
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+onesignal = { id = "com.onesignal.androidsdk.onesignal-gradle-plugin", version.ref = "onesignalPlugin" }
 

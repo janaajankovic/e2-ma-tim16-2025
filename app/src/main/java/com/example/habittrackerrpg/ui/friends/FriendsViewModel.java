@@ -4,12 +4,21 @@ import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
+import android.content.Context;
+import com.example.habittrackerrpg.data.model.Alliance;
+import com.example.habittrackerrpg.data.model.AllianceInvite;
 import com.example.habittrackerrpg.data.model.Friend;
 import com.example.habittrackerrpg.data.model.FriendRequest;
+import com.example.habittrackerrpg.data.model.Message;
 import com.example.habittrackerrpg.data.model.User;
+import com.example.habittrackerrpg.data.repository.AllianceRepository;
 import com.example.habittrackerrpg.data.repository.FriendsRepository;
 import com.example.habittrackerrpg.data.repository.ProfileRepository;
+import com.example.habittrackerrpg.logic.Event;
+import com.example.habittrackerrpg.logic.NotificationSender;
 import com.example.habittrackerrpg.logic.RelationshipStatus;
 import com.example.habittrackerrpg.logic.UserSearchResult;
 import java.util.ArrayList;
@@ -20,33 +29,63 @@ public class FriendsViewModel extends ViewModel {
 
     private final FriendsRepository friendsRepository;
     private final ProfileRepository profileRepository;
+    private final AllianceRepository allianceRepository;
 
     private final LiveData<List<Friend>> friendsList;
     private final LiveData<List<FriendRequest>> friendRequests;
     private final LiveData<List<FriendRequest>> sentFriendRequests;
     private final LiveData<User> currentUserData;
+    private final LiveData<Alliance> currentAlliance;
 
     private final MediatorLiveData<List<UserSearchResult>> searchResults = new MediatorLiveData<>();
     private LiveData<List<User>> currentSearchSource = null;
-
+    private final MutableLiveData<Event<String>> toastMessage = new MutableLiveData<>();
+    private final LiveData<List<AllianceInvite>> pendingAllianceInvites;
+    private final LiveData<List<Message>> chatMessages;
     public FriendsViewModel() {
         this.friendsRepository = new FriendsRepository();
         this.profileRepository = new ProfileRepository();
+        this.allianceRepository = new AllianceRepository();
 
         this.friendsList = friendsRepository.getFriends();
         this.friendRequests = friendsRepository.getFriendRequests();
         this.sentFriendRequests = friendsRepository.getSentFriendRequests();
         this.currentUserData = profileRepository.getUserLiveData();
+        this.currentAlliance = allianceRepository.getUsersAlliance();
 
         searchResults.addSource(currentUserData, user -> combineAllData());
         searchResults.addSource(friendsList, friends -> combineAllData());
         searchResults.addSource(sentFriendRequests, sentRequests -> combineAllData());
+        this.pendingAllianceInvites = Transformations.switchMap(currentAlliance, alliance -> {
+            if (alliance == null) {
+                MutableLiveData<List<AllianceInvite>> emptyResult = new MutableLiveData<>();
+                emptyResult.setValue(new ArrayList<>());
+                return emptyResult;
+            }
+            return allianceRepository.getPendingInvitesForAlliance(alliance.getId());
+        });
+        this.chatMessages = Transformations.switchMap(currentAlliance, alliance -> {
+            if (alliance == null || alliance.getId() == null) {
+                MutableLiveData<List<Message>> emptyResult = new MutableLiveData<>();
+                emptyResult.setValue(new ArrayList<>());
+                return emptyResult;
+            }
+            return allianceRepository.getChatMessages(alliance.getId());
+        });
     }
 
+    public LiveData<List<Message>> getChatMessages() {
+        return chatMessages;
+    }
+
+    public LiveData<List<AllianceInvite>> getPendingAllianceInvites() {
+        return pendingAllianceInvites;
+    }
     public LiveData<List<Friend>> getFriendsList() { return friendsList; }
     public LiveData<List<FriendRequest>> getFriendRequests() { return friendRequests; }
     public LiveData<List<UserSearchResult>> getSearchResults() { return searchResults; }
-
+    public LiveData<Alliance> getCurrentAlliance() { return currentAlliance; }
+    public LiveData<Event<String>> getToastMessage() { return toastMessage; }
     public void searchUsers(String query) {
         if (currentSearchSource != null) {
             searchResults.removeSource(currentSearchSource);
@@ -117,5 +156,63 @@ public class FriendsViewModel extends ViewModel {
 
     public void declineFriendRequest(FriendRequest request) {
         friendsRepository.declineFriendRequest(request);
+    }
+    public void createAlliance(String allianceName) {
+        if (allianceName == null || allianceName.trim().isEmpty() || allianceName.length() < 3) {
+            toastMessage.setValue(new Event<>("Alliance name must be at least 3 characters long."));
+            return;
+        }
+        User currentUser = currentUserData.getValue();
+        if (currentUser == null) {
+            toastMessage.setValue(new Event<>("Cannot create alliance: User data not loaded."));
+            return;
+        }
+        allianceRepository.createAlliance(allianceName, currentUser);
+        toastMessage.setValue(new Event<>("Alliance '" + allianceName + "' created!"));
+    }
+    public void sendAllianceInvite(Context context, Friend friendToInvite) {
+        Alliance alliance = currentAlliance.getValue();
+        User currentUser = currentUserData.getValue();
+
+        if (alliance == null || currentUser == null) {
+            toastMessage.setValue(new Event<>("Error: Data not ready. Please try again."));
+            return;
+        }
+
+        allianceRepository.sendAllianceInviteAndNotify(context, friendToInvite.getUserId(), alliance, currentUser);
+    }
+    public LiveData<User> getCurrentUserData() {
+        return currentUserData;
+    }
+    public void onLeaveAllianceClicked() {
+        User currentUser = currentUserData.getValue();
+        Alliance currentAlliance = this.currentAlliance.getValue();
+
+        if (currentUser != null && currentAlliance != null) {
+            allianceRepository.leaveAlliance(currentUser.getId(), currentAlliance.getId());
+            toastMessage.setValue(new Event<>("You have left the alliance."));
+        } else {
+            toastMessage.setValue(new Event<>("Error: Could not leave alliance."));
+        }
+    }
+
+    public void onDisbandAllianceClicked() {
+        Alliance currentAlliance = this.currentAlliance.getValue();
+
+        if (currentAlliance != null) {
+            allianceRepository.disbandAlliance(currentAlliance);
+            toastMessage.setValue(new Event<>("Alliance has been disbanded."));
+        } else {
+            toastMessage.setValue(new Event<>("Error: Could not disband alliance."));
+        }
+    }
+    public void sendMessage(String text) {
+        User currentUser = currentUserData.getValue();
+        Alliance currentAlliance = this.currentAlliance.getValue();
+
+        if (currentUser != null && currentAlliance != null && text != null && !text.isEmpty()) {
+            Message message = new Message(text, currentUser.getId(), currentUser.getUsername());
+            allianceRepository.sendMessage(currentAlliance.getId(), message);
+        }
     }
 }

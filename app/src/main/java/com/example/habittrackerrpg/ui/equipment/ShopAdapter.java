@@ -13,12 +13,15 @@ import com.example.habittrackerrpg.data.model.Clothing;
 import com.example.habittrackerrpg.data.model.EquipmentItem;
 import com.example.habittrackerrpg.data.model.Potion;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ShopViewHolder> {
 
     private List<EquipmentItem> items = new ArrayList<>();
     private OnBuyButtonClickListener listener;
+    private Map<String, Long> prices = new HashMap<>();
 
     @NonNull
     @Override
@@ -30,7 +33,8 @@ public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ShopViewHolder
     @Override
     public void onBindViewHolder(@NonNull ShopViewHolder holder, int position) {
         EquipmentItem currentItem = items.get(position);
-        holder.bind(currentItem);
+        Long price = prices.get(currentItem.getId());
+        holder.bind(currentItem, price);
     }
 
     @Override
@@ -40,6 +44,11 @@ public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ShopViewHolder
 
     public void setItems(List<EquipmentItem> items) {
         this.items = items;
+        notifyDataSetChanged();
+    }
+
+    public void setPrices(Map<String, Long> prices) {
+        this.prices = prices;
         notifyDataSetChanged();
     }
 
@@ -67,10 +76,14 @@ public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ShopViewHolder
         }
 
         // Povezujemo podatke sa View-ovima
-        public void bind(EquipmentItem item) {
+        public void bind(EquipmentItem item, Long price) {
             textViewName.setText(item.getName());
             textViewDescription.setText(item.getDescription());
-            textViewCost.setText(String.format("%d Coins", item.getCost()));
+            if (price != null) {
+                textViewCost.setText(String.format("%d Coins", price));
+            } else {
+                textViewCost.setText("... Coins");
+            }
 
             if (item.getIcon() != null && !item.getIcon().isEmpty()) {
                 int iconId = itemView.getContext().getResources().getIdentifier(
@@ -80,7 +93,6 @@ public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ShopViewHolder
                 }
             }
 
-            // Prikazujemo različit tekst efekta u zavisnosti od tipa predmeta
             if (item instanceof Potion) {
                 Potion potion = (Potion) item;
                 String duration = potion.isPermanent() ? "Permanent" : "Single Use";

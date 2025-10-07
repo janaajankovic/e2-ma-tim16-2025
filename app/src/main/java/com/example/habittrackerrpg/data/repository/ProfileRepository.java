@@ -41,7 +41,6 @@ public class ProfileRepository {
             if (snapshot != null && snapshot.exists()) {
                 User user = snapshot.toObject(User.class);
                 if (user != null) {
-                    // --- OVO JE KLJUČNA ISPRAVKA KOJA JE NEDOSTAJALA ---
                     user.setId(snapshot.getId());
                     userLiveData.setValue(user);
                 }
@@ -50,7 +49,6 @@ public class ProfileRepository {
         return userLiveData;
     }
 
-    // Ovu metodu smo takođe koristili, dobro je da i ona bude ovde ispravljena
     public MutableLiveData<User> getUserById(String userId) {
         MutableLiveData<User> userLiveData = new MutableLiveData<>();
         if (userId == null) {
@@ -122,6 +120,20 @@ public class ProfileRepository {
                 .addOnFailureListener(e -> Log.w(TAG, "Transakcija neuspešna.", e));
     }
 
+
+    public void updateUser(User user) {
+        if (mAuth.getCurrentUser() == null) {
+            Log.e(TAG, "Cannot update user. User not logged in.");
+            return;
+        }
+        String uid = mAuth.getCurrentUser().getUid();
+
+        db.collection("users").document(uid)
+                .set(user)
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "User profile successfully updated!"))
+                .addOnFailureListener(e -> Log.w(TAG, "Error updating user profile", e));
+    }
+
     public void addCoins(long amount) {
         if (mAuth.getCurrentUser() == null) return;
         String uid = mAuth.getCurrentUser().getUid();
@@ -155,5 +167,6 @@ public class ProfileRepository {
                 .addOnSuccessListener(aVoid -> Log.d("ProfileRepository", "User boss fight attempt level recorded."))
                 .addOnFailureListener(e -> Log.e("ProfileRepository", "Error recording fight attempt", e));
     }
+
 
 }
