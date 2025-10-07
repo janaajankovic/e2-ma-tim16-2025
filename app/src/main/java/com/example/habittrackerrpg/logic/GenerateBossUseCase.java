@@ -69,6 +69,7 @@ public class GenerateBossUseCase {
 
 
                 String animationName;
+                String bossName;
                 if (targetBossLevel <= 4) {
                     animationName = "boss_level_" + targetBossLevel + ".json";
                 } else {
@@ -76,7 +77,17 @@ public class GenerateBossUseCase {
                 }
                 Log.d(TAG, "Selected animation for new boss: " + animationName);
 
-                newBoss = new Boss(targetBossLevel, newHp, "Guardian of Level " + targetBossLevel, animationName);
+                if (targetBossLevel == 1) {
+                    bossName = "Grunt, The First Guardian";
+                } else if (targetBossLevel == 2) {
+                    bossName = "Korgath, The Stone Sentinel";
+                } else if (targetBossLevel == 3) {
+                    bossName = "Malakor, The Shadow Watcher";
+                } else {
+                    bossName = "Guardian of Level " + targetBossLevel;
+                }
+
+                newBoss = new Boss(targetBossLevel, newHp, bossName, animationName);
             }
 
             bossRepository.addNewBoss(newBoss);

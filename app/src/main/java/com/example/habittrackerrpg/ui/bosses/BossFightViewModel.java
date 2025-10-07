@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.habittrackerrpg.data.model.Boss;
 import com.example.habittrackerrpg.data.model.EquipmentItem;
+import com.example.habittrackerrpg.data.model.EquipmentType;
 import com.example.habittrackerrpg.data.model.Potion;
 import com.example.habittrackerrpg.data.model.Task;
 import com.example.habittrackerrpg.data.model.TaskInstance;
@@ -23,6 +24,7 @@ import com.example.habittrackerrpg.logic.CalculateUserStatsUseCase;
 import com.example.habittrackerrpg.logic.BossFightUseCase;
 import com.example.habittrackerrpg.logic.Event;
 import com.example.habittrackerrpg.logic.GenerateBossUseCase;
+import com.example.habittrackerrpg.logic.PotentialRewardsInfo;
 import com.example.habittrackerrpg.ui.tasks.TaskViewModel;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -45,30 +47,23 @@ public class BossFightViewModel extends ViewModel {
     private BossFightUseCase bossFightUseCase;
     private CalculateRewardsUseCase calculateRewardsUseCase;
 
-    private TaskViewModel taskViewModel;
     private MutableLiveData<Boss> _boss = new MutableLiveData<>();
     public LiveData<Boss> boss = _boss;
     private MutableLiveData<Long> _currentBossHp = new MutableLiveData<>();
     public LiveData<Long> currentBossHp = _currentBossHp;
-
     private MutableLiveData<Long> _userPp = new MutableLiveData<>();
     public LiveData<Long> userPp = _userPp;
-
     private MutableLiveData<Integer> _hitChance = new MutableLiveData<>();
     public LiveData<Integer> hitChance = _hitChance;
-
     private MutableLiveData<Integer> _attacksRemaining = new MutableLiveData<>();
-
     public LiveData<Integer> attacksRemaining = _attacksRemaining;
-
     private MutableLiveData<Event<BattleTurnResult.AttackResult>> _attackResultEvent = new MutableLiveData<>();
     public LiveData<Event<BattleTurnResult.AttackResult>> attackResultEvent = _attackResultEvent;
-
     private MutableLiveData<Event<BattleRewards>> _battleRewardsEvent = new MutableLiveData<>();
     public LiveData<Event<BattleRewards>> battleRewardsEvent = _battleRewardsEvent;
-
+    private MutableLiveData<PotentialRewardsInfo> _potentialRewards = new MutableLiveData<>();
+    public LiveData<PotentialRewardsInfo> potentialRewards = _potentialRewards; // Dodao sam public LiveData
     private LiveData<List<Boss>> allBossesLiveData;
-
     private User currentUser;
     private Boss currentBoss;
     private long initialBossHp;
@@ -106,9 +101,11 @@ public class BossFightViewModel extends ViewModel {
     public LiveData<List<UserEquipment>> getUserInventory() {
         return userInventory;
     }
+
     public LiveData<List<Boss>> getAllBosses() {
         return allBossesLiveData;
     }
+
     public void startFight(User user, List<Boss> allBosses, List<Task> allTasks, List<TaskInstance> allInstances) {
         this.currentUser = user;
 
@@ -116,15 +113,52 @@ public class BossFightViewModel extends ViewModel {
         _boss.setValue(this.currentBoss);
 
         if (this.currentBoss == null) {
+            Log.e(TAG, "Current boss is null, cannot start fight.");
             return;
+        }
+
+        Log.d(TAG, "--- Calculating Potential Rewards ---");
+        List<EquipmentItem> allItems = allEquipmentItems.getValue();
+        Log.d(TAG, "allEquipmentItems list size: " + (allItems != null ? allItems.size() : "null"));
+
+        if (allItems != null && !allItems.isEmpty()) {
+            long maxCoins = calculateRewardsUseCase.calculateBaseCoinsForBoss(this.currentBoss.getLevel());
+            Log.d(TAG, "Calculated max potential coins: " + maxCoins);
+
+            List<String> representativeIcons = new ArrayList<>();
+
+            Log.d(TAG, "Searching for a CLOTHING item to display...");
+            allItems.stream()
+                    .filter(item -> item.getType() == EquipmentType.CLOTHING)
+                    .findFirst()
+                    .ifPresent(item -> {
+                        Log.d(TAG, "Found clothing item for preview: " + item.getName());
+                        representativeIcons.add(item.getIcon());
+                    });
+
+            Log.d(TAG, "Searching for a WEAPON item to display...");
+            allItems.stream()
+                    .filter(item -> item.getType() == EquipmentType.WEAPON)
+                    .findFirst()
+                    .ifPresent(item -> {
+                        Log.d(TAG, "Found weapon item for preview: " + item.getName());
+                        representativeIcons.add(item.getIcon());
+                    });
+
+            Log.d(TAG, "Total representative icons found: " + representativeIcons.size());
+            Log.d(TAG, "Setting potential rewards. Coins: " + maxCoins + ", Icons: " + representativeIcons.toString());
+            _potentialRewards.setValue(new PotentialRewardsInfo(String.valueOf(maxCoins), representativeIcons));
+        } else {
+            Log.w(TAG, "Cannot calculate potential rewards because allEquipmentItems is null or empty.");
         }
 
         this.initialBossHp = this.currentBoss.getHp();
         _currentBossHp.setValue(this.initialBossHp);
+
         List<UserEquipment> inventory = userInventory.getValue();
-        List<EquipmentItem> allItems = allEquipmentItems.getValue();
-        long calculatedPp = calculateTotalUserPp(user, inventory, allItems);
+        long calculatedPp = user.getPp();
         _userPp.setValue(calculatedPp);
+
         _hitChance.setValue(user.getLastStageHitChance());
         _attacksRemaining.setValue(5);
     }
@@ -132,23 +166,18 @@ public class BossFightViewModel extends ViewModel {
     public void performAttack() {
         Integer attacksLeft = _attacksRemaining.getValue();
         if (attacksLeft == null || attacksLeft <= 0) return;
-
-        BattleTurnResult turnResult = bossFightUseCase.executeAttack(
-                _userPp.getValue(),
-                _hitChance.getValue()
-        );
-
+        BattleTurnResult turnResult = bossFightUseCase.executeAttack(_userPp.getValue(), _hitChance.getValue());
         _attackResultEvent.setValue(new Event<>(turnResult.getResult()));
-
+        long newHp = _currentBossHp.getValue();
         if (turnResult.wasHit()) {
-            long newHp = _currentBossHp.getValue() - turnResult.getDamageDealt();
+            newHp = _currentBossHp.getValue() - turnResult.getDamageDealt();
             _currentBossHp.setValue(newHp > 0 ? newHp : 0);
         }
 
         int newAttacksLeft = attacksLeft - 1;
         _attacksRemaining.setValue(newAttacksLeft);
 
-        if (newAttacksLeft == 0) {
+        if (newHp <= 0 || newAttacksLeft == 0) {
             finishBattle();
         }
     }
@@ -159,28 +188,22 @@ public class BossFightViewModel extends ViewModel {
         if (allItems == null) {
             allItems = new ArrayList<>();
         }
-
         BattleRewards rewards = calculateRewardsUseCase.execute(currentBoss, initialBossHp, remainingHp, allItems);
         if (rewards.getCoinsAwarded() > 0) {
             profileRepository.addCoins(rewards.getCoinsAwarded());
         }
-
         if (remainingHp <= 0) {
             profileRepository.updateUserAfterBossVictory(currentBoss.getLevel());
         }
-
         _battleRewardsEvent.setValue(new Event<>(rewards));
         _isBattleOver.setValue(true);
-        profileRepository.recordBossFightAttempt(currentUser.getLevel());
-
+        profileRepository.recordBossFightAttempt(currentBoss.getLevel() + 1);
     }
 
     private long calculateTotalUserPp(User user, List<UserEquipment> userEquipmentList, List<EquipmentItem> allEquipmentItems) {
         AtomicLong totalPp = new AtomicLong(user.getPp());
         Log.d(TAG, "Calculating PP. Base PP: " + totalPp);
-
         if (userEquipmentList == null || allEquipmentItems == null) return totalPp.get();
-
         for (UserEquipment ownedItem : userEquipmentList) {
             if (ownedItem.isActive()) {
                 allEquipmentItems.stream()
@@ -193,11 +216,16 @@ public class BossFightViewModel extends ViewModel {
                                 Log.d(TAG, "Applying active Potion '" + potion.getName() + "' bonus: +" + bonus + " PP");
                                 totalPp.addAndGet(bonus);
                             }
-
                         });
             }
         }
         Log.d(TAG, "Final calculated PP with equipment: " + totalPp);
         return totalPp.get();
+    }
+
+    public void resetBattleState() {
+        _boss.setValue(null);
+        _isBattleOver.setValue(false);
+        _potentialRewards.setValue(null);
     }
 }

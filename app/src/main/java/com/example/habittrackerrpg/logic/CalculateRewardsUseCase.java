@@ -63,7 +63,7 @@ public class CalculateRewardsUseCase {
         return droppableItems.get(randomIndex);
     }
 
-    private long calculateBaseCoinsForBoss(int bossLevel) {
+    public long calculateBaseCoinsForBoss(int bossLevel) {
         if (bossLevel <= 1) {
             return 200;
         }
