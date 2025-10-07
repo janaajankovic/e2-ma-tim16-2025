@@ -111,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
         if (inviteId == null) return;
         getIntent().removeExtra("action");
 
-        AllianceRepository allianceRepository = new AllianceRepository();
+        AllianceRepository allianceRepository = new AllianceRepository(MainActivity.this);
         ProfileRepository profileRepository = new ProfileRepository();
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 

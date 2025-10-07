@@ -65,28 +65,24 @@ public class BossFightFragment extends Fragment {
     private void setupInitialDataObserver() {
         MediatorLiveData<Boolean> isDataReady = new MediatorLiveData<>();
 
-        // 1. Definišemo SVE izvore podataka
         LiveData<User> userSource = taskViewModel.getUserLiveData();
         LiveData<List<Boss>> bossesSource = bossFightViewModel.getAllBosses();
         LiveData<List<Task>> tasksSource = taskViewModel.getTaskRules();
         LiveData<List<TaskInstance>> instancesSource = taskViewModel.getTaskInstances();
-        // DODAJEMO IZVORE ZA OPREMU
         LiveData<List<EquipmentItem>> equipmentItemsSource = bossFightViewModel.getAllEquipmentItems();
         LiveData<List<UserEquipment>> inventorySource = bossFightViewModel.getUserInventory();
 
         Runnable checkDataReady = () -> {
-            // 2. Proveravamo da li su SVI podaci stigli
             isDataReady.setValue(
                     userSource.getValue() != null &&
                             bossesSource.getValue() != null &&
                             tasksSource.getValue() != null &&
                             instancesSource.getValue() != null &&
-                            equipmentItemsSource.getValue() != null && // KLJUČNI USLOV
-                            inventorySource.getValue() != null          // KLJUČNI USLOV
+                            equipmentItemsSource.getValue() != null &&
+                            inventorySource.getValue() != null
             );
         };
 
-        // 3. Dodajemo SVE izvore da ih osluškujemo
         isDataReady.addSource(userSource, user -> checkDataReady.run());
         isDataReady.addSource(bossesSource, bosses -> checkDataReady.run());
         isDataReady.addSource(tasksSource, tasks -> checkDataReady.run());
@@ -96,14 +92,12 @@ public class BossFightFragment extends Fragment {
 
         isDataReady.observe(getViewLifecycleOwner(), ready -> {
             if (ready != null && ready) {
-                // 4. Pozivamo startFight TEK KADA JE SVE SPREMNO
                 bossFightViewModel.startFight(
                         userSource.getValue(),
                         bossesSource.getValue(),
                         tasksSource.getValue(),
                         instancesSource.getValue()
                 );
-                // 5. Uklanjamo izvore da se ne bi ponovo pokrenulo
                 isDataReady.removeSource(userSource);
                 isDataReady.removeSource(bossesSource);
                 isDataReady.removeSource(tasksSource);
@@ -210,8 +204,6 @@ public class BossFightFragment extends Fragment {
     private void setupClickListeners() {
         binding.buttonAttack.setOnClickListener(v -> bossFightViewModel.performAttack());
     }
-
-    // Ostatak koda ostaje nepromenjen...
 
     private void displayPotentialRewards(PotentialRewardsInfo rewardsInfo) {
         if (binding == null || rewardsInfo == null) return;

@@ -26,6 +26,7 @@ public class User {
 
     private int lastBossFightAttemptLevel;
     private String allianceId;
+    private int successfulMissions;
 
     public User() {
     }
@@ -42,6 +43,7 @@ public class User {
         this.totalPp = 0;
         this.totalAttackChanceBonus = 0.0;
         this.totalExtraAttacks = 0;
+        this.successfulMissions = 0;
 
 
 
@@ -114,5 +116,13 @@ public class User {
 
     public void setLastBossFightAttemptLevel(int lastBossFightAttemptLevel) {
         this.lastBossFightAttemptLevel = lastBossFightAttemptLevel;
+    }
+
+    public int getSuccessfulMissions() {
+        return successfulMissions;
+    }
+
+    public void setSuccessfulMissions(int successfulMissions) {
+        this.successfulMissions = successfulMissions;
     }
 }

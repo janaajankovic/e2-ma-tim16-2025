@@ -1,7 +1,10 @@
 package com.example.habittrackerrpg.ui.friends;
 
+import android.app.Application;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -25,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class FriendsViewModel extends ViewModel {
+public class FriendsViewModel extends AndroidViewModel {
 
     private final FriendsRepository friendsRepository;
     private final ProfileRepository profileRepository;
@@ -42,10 +45,12 @@ public class FriendsViewModel extends ViewModel {
     private final MutableLiveData<Event<String>> toastMessage = new MutableLiveData<>();
     private final LiveData<List<AllianceInvite>> pendingAllianceInvites;
     private final LiveData<List<Message>> chatMessages;
-    public FriendsViewModel() {
+
+    public FriendsViewModel(@NonNull Application application) {
+        super(application);
         this.friendsRepository = new FriendsRepository();
         this.profileRepository = new ProfileRepository();
-        this.allianceRepository = new AllianceRepository();
+        this.allianceRepository = new AllianceRepository(application.getApplicationContext());
 
         this.friendsList = friendsRepository.getFriends();
         this.friendRequests = friendsRepository.getFriendRequests();
