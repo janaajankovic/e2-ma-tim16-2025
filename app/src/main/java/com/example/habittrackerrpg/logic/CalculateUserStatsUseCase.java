@@ -30,7 +30,7 @@ public class CalculateUserStatsUseCase {
 
         Log.d(TAG, "--- Counting TOTAL tasks in stage ---");
         for (Task task : allTasks) {
-            if (!task.isRecurring() && task.getStatus() != TaskStatus.PAUSED && task.getDueDate() != null &&
+            if (!task.isRecurring() && task.getStatus() != TaskStatus.PAUSED && task.getStatus() != TaskStatus.CANCELLED && task.getDueDate() != null &&
                     isWithinEtapa(task.getDueDate(), etapaStartDate, etapaEndDate)) {
                 totalTasksInStage++;
                 Log.d(TAG, "Total Counter: Added non-recurring task '" + task.getName() + "' with due date " + task.getDueDate());
