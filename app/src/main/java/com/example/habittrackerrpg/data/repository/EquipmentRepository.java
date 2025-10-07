@@ -59,15 +59,14 @@ public class EquipmentRepository {
         return shopItemsLiveData;
     }
 
-    public LiveData<List<UserEquipment>> getUserInventory() {
+    public LiveData<List<UserEquipment>> getUserInventory(String userId) {
         MutableLiveData<List<UserEquipment>> inventoryLiveData = new MutableLiveData<>();
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser == null) {
+        if (userId == null) {
+            inventoryLiveData.setValue(new ArrayList<>());
             return inventoryLiveData;
         }
-        String uid = currentUser.getUid();
 
-        db.collection("users").document(uid).collection("inventory")
+        db.collection("users").document(userId).collection("inventory")
                 .addSnapshotListener((snapshots, e) -> {
                     if (e != null) {
                         Log.w(TAG, "Inventory listen failed.", e);

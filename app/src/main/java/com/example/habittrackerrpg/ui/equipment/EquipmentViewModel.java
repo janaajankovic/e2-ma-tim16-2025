@@ -14,6 +14,7 @@ import com.example.habittrackerrpg.data.model.UserEquipment;
 import com.example.habittrackerrpg.data.repository.EquipmentRepository;
 import com.example.habittrackerrpg.data.repository.ProfileRepository;
 import com.example.habittrackerrpg.logic.Event;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.HashMap;
 import java.util.List;
@@ -32,9 +33,11 @@ public class EquipmentViewModel extends ViewModel {
     public EquipmentViewModel() {
         this.equipmentRepository = new EquipmentRepository();
         this.profileRepository = new ProfileRepository();
+        String currentUid = FirebaseAuth.getInstance().getCurrentUser() != null ?
+                FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
 
         this.shopItems = equipmentRepository.getShopItems();
-        this.userInventory = equipmentRepository.getUserInventory();
+        this.userInventory = equipmentRepository.getUserInventory(currentUid);
         this.currentUser = profileRepository.getUserLiveData();
 
         currentUser.observeForever(user -> recalculateAndSaveStats());

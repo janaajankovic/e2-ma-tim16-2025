@@ -30,6 +30,12 @@
     </fragment>
 
     <fragment
+        android:id="@+id/nav_boss_fight"
+        android:name="com.example.habittrackerrpg.ui.bosses.BossFightFragment"
+        android:label="Boss Fight"
+        tools:layout="@layout/fragment_boss_fight" />
+
+    <fragment
         android:id="@+id/calendarViewFragment"
         android:name="com.example.habittrackerrpg.ui.tasks.CalendarViewFragment"
         android:label="Calendar View"
@@ -64,7 +70,46 @@
         <action
             android:id="@+id/action_profile_to_equipmentDetail"
             app:destination="@id/equipmentDetailFragment" />
+        <action
+            android:id="@+id/action_profile_to_friends"
+            app:destination="@id/friendsHostFragment" />
+        <argument
+            android:name="userId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
     </fragment>
+
+    <fragment
+        android:id="@+id/friendsHostFragment"
+        android:name="com.example.habittrackerrpg.ui.friends.FriendsHostFragment"
+        android:label="Friends"
+        tools:layout="@layout/fragment_friends_host" >
+
+        <action
+            android:id="@+id/action_friends_to_profile"
+            app:destination="@id/nav_profile" />
+
+        <action
+            android:id="@+id/action_friends_to_invite"
+            app:destination="@id/inviteFriendsFragment" />
+        <action
+            android:id="@+id/action_friends_to_chat"
+            app:destination="@id/nav_alliance_chat" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/inviteFriendsFragment"
+        android:name="com.example.habittrackerrpg.ui.friends.InviteFriendsFragment"
+        android:label="Invite Friends"
+        tools:layout="@layout/fragment_invite_friends" />
+
+    <fragment
+        android:id="@+id/nav_alliance_chat"
+        android:name="com.example.habittrackerrpg.ui.friends.AllianceChatFragment"
+        android:label="Alliance Chat"
+        tools:layout="@layout/fragment_alliance_chat" />
 
     <fragment
         android:id="@+id/equipmentDetailFragment"

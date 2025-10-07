@@ -1,5 +1,6 @@
 package com.example.habittrackerrpg.ui.tasks;
 
+import android.app.AlertDialog;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -108,7 +109,6 @@ public class TaskDetailFragment extends Fragment {
         binding.textDifficultyInfo.setText("Difficulty: " + task.getDifficulty().name());
         binding.textImportanceInfo.setText("Importance: " + task.getImportance().name());
         binding.textXpValueInfo.setText("Value: +" + task.getXpValue() + " XP");
-
         populateScheduleInfo(task);
         populateCategoryInfo(task);
         updateActionButtons(task);
@@ -135,6 +135,7 @@ public class TaskDetailFragment extends Fragment {
             binding.buttonDeleteTask.setVisibility(View.GONE);
             return;
         }
+
 
         binding.actionsContainer.setVisibility(View.VISIBLE);
         binding.buttonEditTask.setVisibility(View.VISIBLE);
@@ -174,7 +175,18 @@ public class TaskDetailFragment extends Fragment {
             NavHostFragment.findNavController(TaskDetailFragment.this)
                     .navigate(R.id.action_taskDetailFragment_to_editTaskFragment, bundle);
         });
-        // TODO: Implementirati listenere za Delete dugme
+
+        binding.buttonDeleteTask.setOnClickListener(v -> {
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Delete Task")
+                    .setMessage("Are you sure you want to delete this task? This action cannot be undone.")
+                    .setPositiveButton("Delete", (dialog, which) -> {
+                        taskViewModel.deleteTask(task);
+                        NavHostFragment.findNavController(TaskDetailFragment.this).popBackStack();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
     }
 
     private void populateScheduleInfo(Task task) {

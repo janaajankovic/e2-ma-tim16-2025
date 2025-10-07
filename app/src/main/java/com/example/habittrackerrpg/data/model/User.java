@@ -1,9 +1,13 @@
 package com.example.habittrackerrpg.data.model;
 
+import java.util.Date;
+import com.google.firebase.firestore.Exclude;
 import java.util.HashMap;
 import java.util.Map;
 
 public class User {
+    @Exclude
+    private String id;
     private String username;
     private String avatarId;
     private int level;
@@ -15,6 +19,13 @@ public class User {
     private long totalPp;
     private double totalAttackChanceBonus;
     private int totalExtraAttacks;
+    private int highestBossDefeatedLevel;
+
+    private Date lastLevelUpTimestamp;
+    private int lastStageHitChance;
+
+    private int lastBossFightAttemptLevel;
+    private String allianceId;
 
     public User() {
     }
@@ -34,7 +45,11 @@ public class User {
 
 
 
+        this.highestBossDefeatedLevel = 0;
+        this.lastLevelUpTimestamp = new Date();
     }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 
@@ -64,4 +79,40 @@ public class User {
     public void setTotalAttackChanceBonus(double totalAttackChanceBonus) { this.totalAttackChanceBonus = totalAttackChanceBonus; }
     public int getTotalExtraAttacks() { return totalExtraAttacks; }
     public void setTotalExtraAttacks(int totalExtraAttacks) { this.totalExtraAttacks = totalExtraAttacks; }
+
+    public int getHighestBossDefeatedLevel() {
+        return highestBossDefeatedLevel;
+    }
+
+    public String getAllianceId() { return allianceId; }
+    public void setAllianceId(String allianceId) { this.allianceId = allianceId; }
+
+
+    public void setHighestBossDefeatedLevel(int highestBossDefeatedLevel) {
+        this.highestBossDefeatedLevel = highestBossDefeatedLevel;
+    }
+
+    public Date getLastLevelUpTimestamp() {
+        return lastLevelUpTimestamp;
+    }
+
+    public void setLastLevelUpTimestamp(Date lastLevelUpTimestamp) {
+        this.lastLevelUpTimestamp = lastLevelUpTimestamp;
+    }
+
+    public int getLastStageHitChance() {
+        return lastStageHitChance;
+    }
+
+    public void setLastStageHitChance(int lastStageHitChance) {
+        this.lastStageHitChance = lastStageHitChance;
+    }
+
+    public int getLastBossFightAttemptLevel() {
+        return lastBossFightAttemptLevel;
+    }
+
+    public void setLastBossFightAttemptLevel(int lastBossFightAttemptLevel) {
+        this.lastBossFightAttemptLevel = lastBossFightAttemptLevel;
+    }
 }

@@ -126,7 +126,20 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/stats_container" />
+            <Button
+                android:id="@+id/button_my_friends"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="My Friends"
+               />
 
+            <Button
+                android:id="@+id/button_add_friend"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Add Friend"
+                android:visibility="gone"/>
             <Button
                 android:id="@+id/button_logout"
                 android:layout_width="match_parent"

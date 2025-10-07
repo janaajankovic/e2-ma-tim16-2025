@@ -21,12 +21,12 @@ public class Task implements Serializable {
     private Date completedAt;
     private int xpValue;
 
-    // Polja za ponavljajuće zadatke
     private boolean isRecurring;
     private int recurrenceInterval;
     private String recurrenceUnit;
     private Date recurrenceStartDate;
     private Date recurrenceEndDate;
+    private int awardedXp;
 
     public Task() {
     }
@@ -50,6 +50,7 @@ public class Task implements Serializable {
         this.recurrenceUnit = other.recurrenceUnit;
         this.recurrenceStartDate = other.recurrenceStartDate;
         this.recurrenceEndDate = other.recurrenceEndDate;
+        this.awardedXp = other.awardedXp;
     }
 
     public String getName() {
@@ -186,6 +187,14 @@ public class Task implements Serializable {
 
     public void setXpValue(int xpValue) {
         this.xpValue = xpValue;
+    }
+
+    public int getAwardedXp() {
+        return awardedXp;
+    }
+
+    public void setAwardedXp(int awardedXp) {
+        this.awardedXp = awardedXp;
     }
 
     public int calculateXp() {
