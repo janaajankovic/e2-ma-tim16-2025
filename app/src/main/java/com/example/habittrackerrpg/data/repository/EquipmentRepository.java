@@ -15,6 +15,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.List;
+import android.content.Context;
 
 public class EquipmentRepository {
 
@@ -22,6 +23,11 @@ public class EquipmentRepository {
     private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+    private final AllianceRepository allianceRepository;
+
+    public EquipmentRepository(Context context) {
+        this.allianceRepository = new AllianceRepository(context);
+    }
     public LiveData<List<EquipmentItem>> getShopItems() {
         MutableLiveData<List<EquipmentItem>> shopItemsLiveData = new MutableLiveData<>();
 
@@ -112,6 +118,7 @@ public class EquipmentRepository {
         }).addOnSuccessListener(aVoid -> {
             Log.d(TAG, "Purchase successful!");
             callback.onResult(true, "Item purchased successfully!");
+            allianceRepository.logMissionAction("SHOP_PURCHASE", 2);
         }).addOnFailureListener(e -> {
             Log.w(TAG, "Purchase failed", e);
             callback.onResult(false, e.getMessage());

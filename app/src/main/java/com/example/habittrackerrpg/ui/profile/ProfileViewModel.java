@@ -1,5 +1,10 @@
 package com.example.habittrackerrpg.ui.profile;
 
+import android.app.Application;
+import android.content.Context;
+
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
@@ -20,7 +25,7 @@ import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;
 
-public class ProfileViewModel extends ViewModel {
+public class ProfileViewModel extends AndroidViewModel {
     private AuthRepository authRepository;
     private LiveData<User> userProfileData;
     private final EquipmentRepository equipmentRepository;
@@ -38,7 +43,8 @@ public class ProfileViewModel extends ViewModel {
     private final LiveData<List<FriendRequest>> sentFriendRequests;
     private final LiveData<User> currentUserData;
     private final MutableLiveData<Event<String>> toastMessage = new MutableLiveData<>();
-    public ProfileViewModel() {
+    public ProfileViewModel(@NonNull Application application) {
+        super(application);
         authRepository = new AuthRepository();
         userProfileData = authRepository.getCurrentUser();
         this.profileRepository = new ProfileRepository();
@@ -52,7 +58,7 @@ public class ProfileViewModel extends ViewModel {
             }
             return null;
         });
-        this.equipmentRepository = new EquipmentRepository();
+        this.equipmentRepository = new EquipmentRepository(application.getApplicationContext());
 
         this.shopItems = equipmentRepository.getShopItems();
         String currentUid = FirebaseAuth.getInstance().getCurrentUser() != null ?

@@ -1,5 +1,10 @@
 package com.example.habittrackerrpg.ui.equipment;
 
+import android.app.Application;
+import android.content.Context;
+
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -21,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class EquipmentViewModel extends ViewModel {
+public class EquipmentViewModel extends AndroidViewModel {
 
     private final EquipmentRepository equipmentRepository;
     private final ProfileRepository profileRepository;
@@ -30,8 +35,9 @@ public class EquipmentViewModel extends ViewModel {
     private final LiveData<User> currentUser;
     private final MutableLiveData<Event<String>> toastMessage = new MutableLiveData<>();
     private final MediatorLiveData<Map<String, Long>> calculatedPrices = new MediatorLiveData<>();
-    public EquipmentViewModel() {
-        this.equipmentRepository = new EquipmentRepository();
+    public EquipmentViewModel(@NonNull Application application) {
+        super(application);
+        this.equipmentRepository = new EquipmentRepository(application.getApplicationContext());
         this.profileRepository = new ProfileRepository();
         String currentUid = FirebaseAuth.getInstance().getCurrentUser() != null ?
                 FirebaseAuth.getInstance().getCurrentUser().getUid() : null;

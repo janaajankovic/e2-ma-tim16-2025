@@ -11,9 +11,8 @@ public class Alliance {
     private String name;
     private String leaderId;
     private String leaderUsername;
-
-    // Mapa članova: Ključ je User ID, Vrednost su podaci o članu
     private Map<String, AllianceMember> members;
+    private String activeMissionId;
 
     public Alliance() {}
 
@@ -36,4 +35,6 @@ public class Alliance {
     public void setLeaderUsername(String leaderUsername) { this.leaderUsername = leaderUsername; }
     public Map<String, AllianceMember> getMembers() { return members; }
     public void setMembers(Map<String, AllianceMember> members) { this.members = members; }
+    public String getActiveMissionId() { return activeMissionId; }
+    public void setActiveMissionId(String activeMissionId) { this.activeMissionId = activeMissionId; }
 }

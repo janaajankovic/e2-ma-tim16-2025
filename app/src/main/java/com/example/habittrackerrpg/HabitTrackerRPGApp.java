@@ -37,7 +37,7 @@ public class HabitTrackerRPGApp extends Application {
 
             if ("decline_button".equals(actionId)) {
                 Log.d("OneSignal", "Decline button clicked, handling in background.");
-                AllianceRepository repo = new AllianceRepository();
+                AllianceRepository repo = new AllianceRepository(getApplicationContext());
                 com.example.habittrackerrpg.data.model.AllianceInvite inviteToDecline = new com.example.habittrackerrpg.data.model.AllianceInvite();
                 inviteToDecline.setId(inviteId);
                 repo.declineAllianceInvite(inviteToDecline);

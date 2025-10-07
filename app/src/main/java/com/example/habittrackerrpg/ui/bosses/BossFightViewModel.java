@@ -1,7 +1,11 @@
 package com.example.habittrackerrpg.ui.bosses;
 
+import android.app.Application;
+import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -14,6 +18,7 @@ import com.example.habittrackerrpg.data.model.Task;
 import com.example.habittrackerrpg.data.model.TaskInstance;
 import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.data.model.UserEquipment;
+import com.example.habittrackerrpg.data.repository.AllianceRepository;
 import com.example.habittrackerrpg.data.repository.BossRepository;
 import com.example.habittrackerrpg.data.repository.EquipmentRepository;
 import com.example.habittrackerrpg.data.repository.ProfileRepository;
@@ -33,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class BossFightViewModel extends ViewModel {
+public class BossFightViewModel extends AndroidViewModel {
 
     private static final String TAG = "BossFightViewModel";
 
@@ -72,10 +77,14 @@ public class BossFightViewModel extends ViewModel {
     private final LiveData<List<EquipmentItem>> allEquipmentItems;
     private final LiveData<List<UserEquipment>> userInventory;
 
-    public BossFightViewModel() {
+    private final AllianceRepository allianceRepository;
+
+    public BossFightViewModel(@NonNull Application application) {
+        super(application);
         profileRepository = new ProfileRepository();
+        allianceRepository = new AllianceRepository(application.getApplicationContext());
         bossRepository = new BossRepository();
-        equipmentRepository = new EquipmentRepository();
+        equipmentRepository = new EquipmentRepository(application.getApplicationContext());
         allBossesLiveData = bossRepository.getAllBosses();
         generateBossUseCase = new GenerateBossUseCase();
         calculateUserStatsUseCase = new CalculateUserStatsUseCase();
@@ -172,6 +181,7 @@ public class BossFightViewModel extends ViewModel {
         if (turnResult.wasHit()) {
             newHp = _currentBossHp.getValue() - turnResult.getDamageDealt();
             _currentBossHp.setValue(newHp > 0 ? newHp : 0);
+            allianceRepository.logMissionAction("REGULAR_BOSS_HIT", 2);
         }
 
         int newAttacksLeft = attacksLeft - 1;

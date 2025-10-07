@@ -1,7 +1,11 @@
 package com.example.habittrackerrpg.ui.tasks;
 
+import android.app.Application;
+import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -10,9 +14,12 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.habittrackerrpg.data.model.Category;
 import com.example.habittrackerrpg.data.model.Task;
+import com.example.habittrackerrpg.data.model.TaskDifficulty;
+import com.example.habittrackerrpg.data.model.TaskImportance;
 import com.example.habittrackerrpg.data.model.TaskInstance;
 import com.example.habittrackerrpg.data.model.TaskStatus;
 import com.example.habittrackerrpg.data.model.User;
+import com.example.habittrackerrpg.data.repository.AllianceRepository;
 import com.example.habittrackerrpg.data.repository.CategoryRepository;
 import com.example.habittrackerrpg.data.repository.ProfileRepository;
 import com.example.habittrackerrpg.data.repository.TaskRepository;
@@ -29,7 +36,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-public class TaskViewModel extends ViewModel {
+public class TaskViewModel extends AndroidViewModel {
 
     private TaskRepository taskRepository;
     private CategoryRepository categoryRepository;
@@ -46,8 +53,11 @@ public class TaskViewModel extends ViewModel {
     private MediatorLiveData<List<Task>> allCompletedTasksForStats = new MediatorLiveData<>();
     private final LiveData<User> userLiveData;
     private MediatorLiveData<List<Task>> allTasksAndInstancesForStats = new MediatorLiveData<>();
+    private final AllianceRepository allianceRepository;
 
-    public TaskViewModel() {
+    public TaskViewModel(@NonNull Application application) {
+        super(application);
+        this.allianceRepository = new AllianceRepository(application.getApplicationContext());
         taskRepository = new TaskRepository();
         categoryRepository = new CategoryRepository();
         profileRepository = new ProfileRepository();
@@ -185,6 +195,24 @@ public class TaskViewModel extends ViewModel {
                     taskRepository.updateTask(taskToUpdate);
                 }
 
+                Log.d("SpecialMissionHook", "Task completed, logging action for special mission.");
+                TaskDifficulty difficulty = task.getDifficulty();
+                TaskImportance importance = task.getImportance();
+
+                if (difficulty != null && importance != null) {
+                    if (difficulty == TaskDifficulty.VERY_EASY || difficulty == TaskDifficulty.EASY) {
+                        allianceRepository.logMissionAction("TASK_COMPLETION", 1);
+                    }
+
+                    if(importance == TaskImportance.IMPORTANT || importance == TaskImportance.NORMAL) {
+                        allianceRepository.logMissionAction("TASK_COMPLETION", 1);
+                    }
+
+                    if(difficulty == TaskDifficulty.EASY && importance == TaskImportance.NORMAL){
+                        allianceRepository.logMissionAction("TASK_COMPLETION", 1);
+                    }
+                }
+
                 allCompletedTasksForStats.removeObserver(this);
             }
         };
@@ -198,7 +226,6 @@ public class TaskViewModel extends ViewModel {
         if (taskRules == null || instances == null) return;
 
         List<Task> events = new ArrayList<>();
-        // Prvo prolazimo kroz jednokratne zadatke
         for (Task rule : taskRules) {
             if (!rule.isRecurring()) {
                 if (!completedOnly || rule.getStatus() == TaskStatus.COMPLETED) {
@@ -206,7 +233,6 @@ public class TaskViewModel extends ViewModel {
                 }
             }
         }
-        // Zatim prolazimo kroz instance ponavljajućih zadataka
         for (TaskInstance instance : instances) {
             if (!completedOnly || instance.getStatus() == TaskStatus.COMPLETED) {
                 taskRules.stream()

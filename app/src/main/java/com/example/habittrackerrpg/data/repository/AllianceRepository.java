@@ -5,19 +5,33 @@ import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+
 import com.example.habittrackerrpg.data.model.Alliance;
 import com.example.habittrackerrpg.data.model.AllianceInvite;
 import com.example.habittrackerrpg.data.model.AllianceMember;
 import com.example.habittrackerrpg.data.model.Message;
+import com.example.habittrackerrpg.data.model.SpecialMission;
+import com.example.habittrackerrpg.data.model.SpecialMissionProgress;
 import com.example.habittrackerrpg.data.model.User;
+import com.example.habittrackerrpg.logic.EndMissionWorker;
 import com.example.habittrackerrpg.logic.NotificationSender;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.WriteBatch;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class AllianceRepository {
 
@@ -25,9 +39,11 @@ public class AllianceRepository {
     private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final ProfileRepository profileRepository;
+    private final Context context;
 
-    public AllianceRepository() {
+    public AllianceRepository(Context context) {
         this.profileRepository = new ProfileRepository();
+        this.context = context;
     }
     public void createAlliance(String allianceName, User leader) {
         String leaderId = mAuth.getCurrentUser().getUid();
@@ -280,7 +296,155 @@ public class AllianceRepository {
     public void sendMessage(String allianceId, Message message) {
         db.collection("alliances").document(allianceId).collection("messages")
                 .add(message)
-                .addOnSuccessListener(documentReference -> Log.d(TAG, "Message sent successfully!"))
+                .addOnSuccessListener(documentReference -> {
+                    Log.d(TAG, "Message sent successfully!");
+
+                    logMissionAction("ALLIANCE_MESSAGE", 4);
+
+                })
                 .addOnFailureListener(e -> Log.e(TAG, "Error sending message", e));
+    }
+
+    public void startSpecialMission(Alliance alliance) {
+        if (alliance.getActiveMissionId() != null) {
+            Log.w(TAG, "Alliance already has an active mission.");
+            return;
+        }
+
+        int memberCount = alliance.getMembers().size();
+        if (memberCount == 0) return;
+        long bossHp = 100 * memberCount;
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, 14);
+        Date endDate = calendar.getTime();
+
+        SpecialMission mission = new SpecialMission(alliance.getId(), alliance.getLeaderId(), endDate, bossHp);
+
+        WriteBatch batch = db.batch();
+        DocumentReference missionRef = db.collection("specialMissions").document();
+        batch.set(missionRef, mission);
+
+        DocumentReference allianceRef = db.collection("alliances").document(alliance.getId());
+        batch.update(allianceRef, "activeMissionId", missionRef.getId());
+
+        for (AllianceMember member : alliance.getMembers().values()) {
+            SpecialMissionProgress progress = new SpecialMissionProgress(member.getUserId(), member.getUsername());
+            DocumentReference progressRef = missionRef.collection("progress").document(member.getUserId());
+            batch.set(progressRef, progress);
+        }
+
+        batch.commit().addOnSuccessListener(aVoid -> {
+            Log.d(TAG, "Special mission started successfully!");
+
+            // Zakazujemo Worker da završi misiju za 14 dana
+            Data inputData = new Data.Builder().putString("MISSION_ID", missionRef.getId()).build();
+            OneTimeWorkRequest endMissionWorkRequest = new OneTimeWorkRequest.Builder(EndMissionWorker.class)
+                    .setInitialDelay(14, TimeUnit.DAYS)
+                    .setInputData(inputData)
+                    .build();
+            WorkManager.getInstance(context).enqueue(endMissionWorkRequest);
+
+            Log.d(TAG, "EndMissionWorker scheduled for mission: " + missionRef.getId());
+        });
+    }
+
+    public void logMissionAction(String actionType, int damage) {
+        String uid = mAuth.getCurrentUser().getUid();
+        profileRepository.getUserLiveData().observeForever(user -> {
+            if (user == null || user.getAllianceId() == null) return;
+            db.collection("alliances").document(user.getAllianceId()).get().addOnSuccessListener(allianceDoc -> {
+                String missionId = allianceDoc.getString("activeMissionId");
+                if (missionId == null) return;
+
+                DocumentReference progressRef = db.collection("specialMissions").document(missionId).collection("progress").document(uid);
+                DocumentReference missionRef = db.collection("specialMissions").document(missionId);
+
+                db.runTransaction(transaction -> {
+                    SpecialMissionProgress progress = transaction.get(progressRef).toObject(SpecialMissionProgress.class);
+                    if (progress == null) return null;
+
+                    boolean shouldDealDamage = false;
+                    switch (actionType) {
+                        case "SHOP_PURCHASE":
+                            if (progress.getShopPurchases() < 5) {
+                                progress.setShopPurchases(progress.getShopPurchases() + 1);
+                                shouldDealDamage = true;
+                            }
+                            break;
+                        case "REGULAR_BOSS_HIT":
+                            if (progress.getRegularBossHits() < 10) {
+                                progress.setRegularBossHits(progress.getRegularBossHits() + 1);
+                                shouldDealDamage = true;
+                            }
+                            break;
+                        case "TASK_COMPLETION":
+                            if (progress.getTaskCompletions() < 10) {
+                                progress.setTaskCompletions(progress.getTaskCompletions() + 1);
+                                shouldDealDamage = true;
+                            }
+                            break;
+                        case "OTHER_TASK_COMPLETION":
+                            if (progress.getOtherTaskCompletions() < 6) {
+                                progress.setOtherTaskCompletions(progress.getOtherTaskCompletions() + 1);
+                                shouldDealDamage = true;
+                            }
+                            break;
+                        case "ALLIANCE_MESSAGE":
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                            String today = sdf.format(new Date());
+                            if (!progress.getDailyMessageDates().contains(today)) {
+                                progress.getDailyMessageDates().add(today);
+                                shouldDealDamage = true;
+                            }
+                            break;
+                    }
+
+                    if (shouldDealDamage) {
+                        progress.setTotalDamageDealt(progress.getTotalDamageDealt() + damage);
+                        transaction.set(progressRef, progress);
+                        transaction.update(missionRef, "currentBossHp", FieldValue.increment(-damage));
+                    }
+                    return null;
+                });
+            });
+        });
+    }
+
+    public LiveData<SpecialMission> getMissionDetails(String missionId) {
+        MutableLiveData<SpecialMission> liveData = new MutableLiveData<>();
+        db.collection("specialMissions").document(missionId)
+                .addSnapshotListener((snapshot, e) -> {
+                    if (snapshot != null && snapshot.exists()) {
+                        liveData.setValue(snapshot.toObject(SpecialMission.class));
+                    } else {
+                        liveData.setValue(null);
+                    }
+                });
+        return liveData;
+    }
+
+    public LiveData<List<SpecialMissionProgress>> getAllMembersProgress(String missionId) {
+        MutableLiveData<List<SpecialMissionProgress>> liveData = new MutableLiveData<>();
+        db.collection("specialMissions").document(missionId).collection("progress")
+                .orderBy("totalDamageDealt", Query.Direction.DESCENDING)
+                .addSnapshotListener((snapshots, e) -> {
+                    if (snapshots != null) {
+                        liveData.setValue(snapshots.toObjects(SpecialMissionProgress.class));
+                    }
+                });
+        return liveData;
+    }
+
+    public LiveData<SpecialMissionProgress> getMyProgress(String missionId) {
+        String uid = mAuth.getCurrentUser().getUid();
+        MutableLiveData<SpecialMissionProgress> liveData = new MutableLiveData<>();
+        db.collection("specialMissions").document(missionId).collection("progress").document(uid)
+                .addSnapshotListener((snapshot, e) -> {
+                    if (snapshot != null && snapshot.exists()) {
+                        liveData.setValue(snapshot.toObject(SpecialMissionProgress.class));
+                    }
+                });
+        return liveData;
     }
 }
