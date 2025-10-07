@@ -78,16 +78,18 @@ public class ProfileFragment extends Fragment {
             updateUI(profileViewModel.getDisplayedUserData().getValue());
         });
 
+
+        profileViewModel.getUserInventory().observe(getViewLifecycleOwner(), inventory -> {
+            updateInventoryData();
+        });
+        profileViewModel.getShopItems().observe(getViewLifecycleOwner(), shopItems -> {
+            updateInventoryData();
+
         profileViewModel.getSentFriendRequests().observe(getViewLifecycleOwner(), requests -> {
             updateUI(profileViewModel.getDisplayedUserData().getValue());
         });
 
-        profileViewModel.getUserInventory().observe(getViewLifecycleOwner(), inventory -> {
-            updateUI(profileViewModel.getDisplayedUserData().getValue());
-        });
-        profileViewModel.getShopItems().observe(getViewLifecycleOwner(), shopItems -> {
-            updateUI(profileViewModel.getDisplayedUserData().getValue());
-        });
+       
         binding.buttonLogout.setOnClickListener(v -> {
             if (getActivity() instanceof MainActivity) {
                 ((MainActivity) getActivity()).performLogout();
@@ -124,7 +126,11 @@ public class ProfileFragment extends Fragment {
         binding.textViewTitle.setText(user.getTitle());
         binding.textViewLevel.setText(getString(R.string.level_text, user.getLevel()));
         binding.textViewXp.setText(getString(R.string.xp_text, user.getXp()));
+        binding.textViewPp.setText(getString(R.string.pp_text, user.getTotalPp()));
+        binding.textViewCoins.setText(getString(R.string.coins_text, user.getCoins()));
+
         binding.textViewBadges.setText(getString(R.string.profile_badges) + " 0");
+
 
         binding.imageViewQrCode.setVisibility(View.VISIBLE);
         if (user.getUsername() != null && !user.getUsername().isEmpty()) {
