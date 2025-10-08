@@ -48,24 +48,28 @@ public class ShopFragment extends Fragment {
     }
 
     private void setupObservers() {
+        // Observer za listu itema
         viewModel.getShopItems().observe(getViewLifecycleOwner(), items -> {
             if (items != null) {
                 adapter.setItems(items);
             }
         });
 
+        // Observer za izračunate cene
         viewModel.getCalculatedPrices().observe(getViewLifecycleOwner(), prices -> {
             if (prices != null) {
                 adapter.setPrices(prices);
             }
         });
 
+        // Observer za stanje novčića
         viewModel.getCurrentUser().observe(getViewLifecycleOwner(), user -> {
             if (user != null) {
                 binding.textViewCoinBalance.setText(String.format("Coins: %d", user.getCoins()));
             }
         });
 
+        // Observer za poruke
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), event -> {
             String message = event.getContentIfNotHandled();
             if (message != null) {
