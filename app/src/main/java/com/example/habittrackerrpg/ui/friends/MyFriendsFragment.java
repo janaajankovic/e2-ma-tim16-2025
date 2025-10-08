@@ -120,6 +120,7 @@ public class MyFriendsFragment extends Fragment {
                 allianceMemberAdapter.setData(new ArrayList<>(alliance.getMembers().values()), alliance.getLeaderId());
 
                 User currentUser = viewModel.getCurrentUserData().getValue();
+                binding.buttonInviteFriends.setVisibility(View.GONE);
 
                 if (currentUser != null) {
                     binding.buttonAllianceAction.setVisibility(View.VISIBLE);

@@ -2,10 +2,12 @@ package com.example.habittrackerrpg.ui.statistics;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import com.example.habittrackerrpg.data.model.Category;
+import com.example.habittrackerrpg.data.model.MissionStatus;
+import com.example.habittrackerrpg.data.model.SpecialMission;
 import com.example.habittrackerrpg.data.model.Task;
-import com.example.habittrackerrpg.data.model.TaskImportance;
 import com.example.habittrackerrpg.data.model.TaskStatus;
 import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.data.repository.ProfileRepository;
@@ -26,6 +28,7 @@ public class StatisticsViewModel extends ViewModel {
     private final ProfileRepository profileRepository;
     private final LiveData<User> userLiveData;
     private final LiveData<List<Category>> categoriesLiveData;
+    private final LiveData<List<SpecialMission>> allMissionsLiveData;
 
     private final CalculateLongestStreakUseCase calculateLongestStreakUseCase;
     private final CalculateActiveDaysUseCase calculateActiveDaysUseCase;
@@ -53,17 +56,29 @@ public class StatisticsViewModel extends ViewModel {
         this.categoriesLiveData = taskViewModel.getCategories();
         this.userLiveData = profileRepository.getUserLiveData();
 
+        this.allMissionsLiveData = Transformations.switchMap(userLiveData, user -> {
+            if (user != null && user.getAllianceId() != null) {
+                return statisticsRepository.getAllUserMissions(user.getAllianceId());
+            } else {
+                MutableLiveData<List<SpecialMission>> emptyData = new MutableLiveData<>();
+                emptyData.setValue(new ArrayList<>());
+                return emptyData;
+            }
+        });
+
         userLiveData.observeForever(user -> processData());
         allTasksLiveData.observeForever(tasks -> processData());
         categoriesLiveData.observeForever(categories -> processData());
+        allMissionsLiveData.observeForever(missions -> processData());
     }
 
     private void processData() {
         List<Task> tasks = allTasksLiveData.getValue();
         User user = userLiveData.getValue();
         List<Category> categories = categoriesLiveData.getValue();
+        List<SpecialMission> missions = allMissionsLiveData.getValue();
 
-        if (tasks == null || user == null || categories == null) {
+        if (tasks == null || user == null || categories == null || missions == null) {
             return;
         }
 
@@ -72,7 +87,7 @@ public class StatisticsViewModel extends ViewModel {
         longestStreak.setValue(calculateLongestStreakUseCase.execute(tasks));
         activeDays.setValue(calculateActiveDaysUseCase.execute(tasks));
         averageDifficultyDescription.setValue(calculateOverallAverageDifficultyUseCase.execute(tasks, user.getLevel()).description);
-        specialMissions.setValue(calculateSpecialMissions(tasks));
+        specialMissions.setValue(calculateSpecialMissions(missions));
 
         Map<LocalDate, List<Integer>> dailyXpMap = calculateDailyXpUseCase.getDailyXpMap(tasks, user.getLevel());
         List<LocalDate> sortedDates = new ArrayList<>(dailyXpMap.keySet());
@@ -98,6 +113,7 @@ public class StatisticsViewModel extends ViewModel {
         dailyAverageXp.setValue(averageXpEntries);
     }
 
+    // GETTERI (ostaju isti)
     public LiveData<Map<TaskStatus, Integer>> getTasksByStatus() { return tasksByStatus; }
     public LiveData<Map<String, Integer>> getCompletedTasksByCategory() { return completedTasksByCategory; }
     public LiveData<Integer> getLongestStreak() { return longestStreak; }
@@ -133,14 +149,20 @@ public class StatisticsViewModel extends ViewModel {
         return categoryCount;
     }
 
-    private String calculateSpecialMissions(List<Task> tasks) {
-        int started = 0, completed = 0;
-        for(Task task : tasks){
-            if(task.getImportance() == TaskImportance.SPECIAL){
-                if(task.getStatus() == TaskStatus.ACTIVE) started++;
-                if(task.getStatus() == TaskStatus.COMPLETED) completed++;
+    private String calculateSpecialMissions(List<SpecialMission> missions) {
+        if (missions == null) {
+            return "Started: 0 / Completed: 0";
+        }
+
+        int started = missions.size();
+        int completed = 0;
+
+        for (SpecialMission mission : missions) {
+            if (mission.getStatus() == MissionStatus.SUCCESS) {
+                completed++;
             }
         }
-        return "Started: " + started + " / Completed: " + completed;
+
+        return "Started: " + started + " /  Successfully Completed: " + completed;
     }
 }
