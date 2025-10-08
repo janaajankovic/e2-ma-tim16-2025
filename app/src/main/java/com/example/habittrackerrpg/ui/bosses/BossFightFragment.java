@@ -132,8 +132,20 @@ public class BossFightFragment extends Fragment {
             binding.textBossHpValue.setText(String.format("%d / %d", hp.intValue(), binding.progressBarBossHp.getMax()));
         });
 
+        bossFightViewModel.maxAttacks.observe(getViewLifecycleOwner(), max -> {
+            Integer remaining = bossFightViewModel.attacksRemaining.getValue();
+            if (remaining != null) {
+                binding.textAttacksRemaining.setText(String.format("%d / %d", remaining, max));
+            }
+        });
+
         bossFightViewModel.attacksRemaining.observe(getViewLifecycleOwner(), attacks -> {
-            binding.textAttacksRemaining.setText(String.format("%s / 5", attacks));
+            Integer max = bossFightViewModel.maxAttacks.getValue();
+            if (max != null) {
+                binding.textAttacksRemaining.setText(String.format("%d / %d", attacks, max));
+            } else {
+                binding.textAttacksRemaining.setText(String.format("%d / ?", attacks));
+            }
         });
 
         bossFightViewModel.userPp.observe(getViewLifecycleOwner(), pp -> {

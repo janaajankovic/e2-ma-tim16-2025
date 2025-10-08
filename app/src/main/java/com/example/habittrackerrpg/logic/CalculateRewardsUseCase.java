@@ -1,8 +1,9 @@
 package com.example.habittrackerrpg.logic;
 
 import com.example.habittrackerrpg.data.model.Boss;
-import com.example.habittrackerrpg.data.model.EquipmentItem; // NOVI IMPORT
-import com.example.habittrackerrpg.data.model.EquipmentType; // NOVI IMPORT
+import com.example.habittrackerrpg.data.model.EquipmentItem;
+import com.example.habittrackerrpg.data.model.EquipmentType;
+import com.example.habittrackerrpg.data.model.User; // NOVI IMPORT
 
 import java.util.List;
 import java.util.Random;
@@ -16,11 +17,12 @@ public class CalculateRewardsUseCase {
         this.randomGenerator = new Random();
     }
 
-    public BattleRewards execute(Boss boss, long initialHp, long remainingHp, List<EquipmentItem> allPossibleEquipment) {
+    public BattleRewards execute(Boss boss, long initialHp, long remainingHp, List<EquipmentItem> allPossibleEquipment, User user) {
         long baseCoins = calculateBaseCoinsForBoss(boss.getLevel());
         long finalCoins = 0;
         boolean equipmentDropped = false;
 
+        // Logika za osnovnu količinu novčića ostaje ista
         if (remainingHp <= 0) {
             finalCoins = baseCoins;
             if (randomGenerator.nextInt(100) < 20) {
@@ -34,6 +36,12 @@ public class CalculateRewardsUseCase {
         } else {
             finalCoins = 0;
             equipmentDropped = false;
+        }
+
+        if (finalCoins > 0 && user != null) {
+            double coinBonusPercent = user.getPermanentCoinBonusPercent();
+            long bonusAmount = (long) (finalCoins * coinBonusPercent);
+            finalCoins += bonusAmount;
         }
 
         EquipmentItem finalEquipment = null;
