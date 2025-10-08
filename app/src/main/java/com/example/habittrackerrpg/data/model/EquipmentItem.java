@@ -1,15 +1,16 @@
 package com.example.habittrackerrpg.data.model;
 
+import com.google.firebase.firestore.DocumentId;
 import com.google.firebase.firestore.Exclude;
 
 public abstract class EquipmentItem {
 
-    @Exclude
+    @DocumentId
     private String id;
     private String name;
     private String description;
     private EquipmentType type;
-    private int cost; // Cijena u novčićima
+    private int cost;
 
     private String icon;
 

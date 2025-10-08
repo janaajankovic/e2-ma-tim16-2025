@@ -8,4 +8,10 @@
     <color name="icon_color_on_action">#A05B1D</color>
     <color name="icon_tint_default">#8A8A8A</color>
     <color name="icon_tint_star">#FFC107</color>
-    </resources>
+    <color name="badge_bronze">#CD7F32</color>
+    <color name="badge_silver">#C0C0C0</color>
+    <color name="badge_gold">#FFD700</color>
+    <color name="badge_platinum">#E5E4E2</color>
+    <color name="badge_diamond">#88C2D0</color>
+    <color name="badge_color_default">#BDBDBD</color>
+</resources>
