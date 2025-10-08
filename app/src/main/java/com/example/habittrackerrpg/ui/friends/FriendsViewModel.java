@@ -194,6 +194,10 @@ public class FriendsViewModel extends AndroidViewModel {
         Alliance currentAlliance = this.currentAlliance.getValue();
 
         if (currentUser != null && currentAlliance != null) {
+            if (currentAlliance.getActiveMissionId() != null && !currentAlliance.getActiveMissionId().isEmpty()) {
+                toastMessage.setValue(new Event<>("You cannot leave the alliance while a special mission is active."));
+                return;
+            }
             allianceRepository.leaveAlliance(currentUser.getId(), currentAlliance.getId());
             toastMessage.setValue(new Event<>("You have left the alliance."));
         } else {
@@ -205,6 +209,10 @@ public class FriendsViewModel extends AndroidViewModel {
         Alliance currentAlliance = this.currentAlliance.getValue();
 
         if (currentAlliance != null) {
+            if (currentAlliance.getActiveMissionId() != null && !currentAlliance.getActiveMissionId().isEmpty()) {
+                toastMessage.setValue(new Event<>("You cannot disband the alliance while a special mission is active."));
+                return;
+            }
             allianceRepository.disbandAlliance(currentAlliance);
             toastMessage.setValue(new Event<>("Alliance has been disbanded."));
         } else {
