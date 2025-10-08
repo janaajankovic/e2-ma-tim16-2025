@@ -40,6 +40,10 @@ public class CalculateUserStatsUseCase {
         LocalDate startLocalDate = etapaStartDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate endLocalDate = etapaEndDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
+        if (endLocalDate.isEqual(LocalDate.now(ZoneId.systemDefault()))) {
+            endLocalDate = endLocalDate.minusDays(1);
+        }
+
         List<Task> recurringRules = allTasks.stream()
                 .filter(t -> t.isRecurring() && t.getStatus() != TaskStatus.PAUSED && t.getStatus() != TaskStatus.CANCELLED)
                 .collect(Collectors.toList());
