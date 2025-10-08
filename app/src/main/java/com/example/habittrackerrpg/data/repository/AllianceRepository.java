@@ -94,7 +94,6 @@ public class AllianceRepository {
                 .addOnSuccessListener(docRef -> {
                     Log.d(TAG, "Alliance invite successfully written to database with ID: " + docRef.getId());
 
-                    // TEK SADA, KADA ZNAMO DA JE POZIVNICA KREIRANA, ŠALJEMO NOTIFIKACIJU
                     String title = "Alliance Invitation";
                     String message = currentUser.getUsername() + " invites you to join '" + currentAlliance.getName() + "'.";
                     NotificationSender.sendNotificationToUser(context, friendId, title, message, docRef.getId(), currentAlliance.getId());
@@ -358,7 +357,6 @@ public class AllianceRepository {
         batch.commit().addOnSuccessListener(aVoid -> {
             Log.d(TAG, "Special mission started successfully!");
 
-            // Zakazujemo Worker da završi misiju za 14 dana
             Data inputData = new Data.Builder().putString("MISSION_ID", missionRef.getId()).build();
             OneTimeWorkRequest endMissionWorkRequest = new OneTimeWorkRequest.Builder(EndMissionWorker.class)
                     // .setInitialDelay(14, TimeUnit.DAYS)
