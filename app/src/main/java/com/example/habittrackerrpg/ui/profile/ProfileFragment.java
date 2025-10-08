@@ -2,14 +2,18 @@ package com.example.habittrackerrpg.ui.profile;
 
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
@@ -32,6 +36,7 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.journeyapps.barcodescanner.BarcodeEncoder;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -122,7 +127,6 @@ public class ProfileFragment extends Fragment {
         String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         boolean isMyProfile = user.getId().equals(currentUid);
 
-        // --- Prikaz javnih podataka (vidljivo svima) ---
         binding.textViewUsername.setText(user.getUsername());
         binding.textViewTitle.setText(user.getTitle());
         binding.textViewLevel.setText(getString(R.string.level_text, user.getLevel()));
@@ -131,6 +135,44 @@ public class ProfileFragment extends Fragment {
         binding.textViewCoins.setText(getString(R.string.coins_text, user.getCoins()));
         binding.textViewBadges.setText(getString(R.string.badges_text, user.getSuccessfulMissions()));
 
+        int missionWins = user.getSuccessfulMissions();
+        binding.badgeContainer.removeAllViews();
+
+        if (missionWins > 0) {
+            List<Integer> colorSequence = Arrays.asList(
+                    R.color.badge_bronze,
+                    R.color.badge_silver,
+                    R.color.badge_gold,
+                    R.color.badge_platinum,
+                    R.color.badge_diamond
+            );
+            int defaultColorRes = R.color.badge_color_default;
+
+            for (int i = 0; i < missionWins; i++) {
+                ImageView badgeView = new ImageView(requireContext());
+
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        (int) (24 * getResources().getDisplayMetrics().density),
+                        (int) (24 * getResources().getDisplayMetrics().density)
+                );
+                params.setMarginEnd((int) (4 * getResources().getDisplayMetrics().density));
+                badgeView.setLayoutParams(params);
+
+                badgeView.setImageResource(R.drawable.ic_badge);
+
+                int colorResId;
+                if (i < colorSequence.size()) {
+                    colorResId = colorSequence.get(i);
+                } else {
+                    colorResId = defaultColorRes;
+                }
+
+                int color = ContextCompat.getColor(requireContext(), colorResId);
+                badgeView.setColorFilter(color, PorterDuff.Mode.SRC_IN);
+
+                binding.badgeContainer.addView(badgeView);
+            }
+        }
 
         binding.imageViewQrCode.setVisibility(View.VISIBLE);
         if (user.getUsername() != null && !user.getUsername().isEmpty()) {
