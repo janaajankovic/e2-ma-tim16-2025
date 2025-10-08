@@ -9,11 +9,13 @@ import com.example.habittrackerrpg.data.model.EquipmentType;
 import com.example.habittrackerrpg.data.model.Potion;
 import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.data.model.UserEquipment;
+import com.example.habittrackerrpg.data.model.Weapon;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import android.content.Context;
 
@@ -189,5 +191,85 @@ public class EquipmentRepository {
                 .delete()
                 .addOnSuccessListener(aVoid -> Log.d(TAG, "UserEquipment item successfully deleted!"))
                 .addOnFailureListener(e -> Log.w(TAG, "Error deleting UserEquipment item", e));
+    }
+
+    public LiveData<List<EquipmentItem>> getClothingAndWeapons() {
+        MutableLiveData<List<EquipmentItem>> itemsLiveData = new MutableLiveData<>();
+
+        db.collection("shop_equipment")
+                .whereIn("type", Arrays.asList("CLOTHING", "WEAPON"))
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        List<EquipmentItem> items = new ArrayList<>();
+                        task.getResult().forEach(doc -> {
+                            try {
+                                String typeString = doc.getString("type");
+                                if (typeString == null) return;
+
+                                EquipmentType type = EquipmentType.valueOf(typeString);
+                                EquipmentItem item = null;
+
+                                // We only need to handle the types we requested
+                                if (type == EquipmentType.CLOTHING) {
+                                    item = doc.toObject(Clothing.class);
+                                } else if (type == EquipmentType.WEAPON) {
+                                    item = doc.toObject(Weapon.class);
+                                }
+
+                                if (item != null) {
+                                    items.add(item);
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error parsing equipment item.", e);
+                            }
+                        });
+                        itemsLiveData.setValue(items);
+                    } else {
+                        Log.w(TAG, "Error getting clothing and weapons.", task.getException());
+                    }
+                });
+
+        return itemsLiveData;
+    }
+
+    public LiveData<List<EquipmentItem>> getAllEquipmentItems() {
+        MutableLiveData<List<EquipmentItem>> allItemsLiveData = new MutableLiveData<>();
+
+        db.collection("shop_equipment")
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        List<EquipmentItem> items = new ArrayList<>();
+                        task.getResult().forEach(doc -> {
+                            try {
+                                String typeString = doc.getString("type");
+                                if (typeString == null) return;
+
+                                EquipmentType type = EquipmentType.valueOf(typeString);
+                                EquipmentItem item = null;
+
+                                if (type == EquipmentType.POTION) {
+                                    item = doc.toObject(Potion.class);
+                                } else if (type == EquipmentType.CLOTHING) {
+                                    item = doc.toObject(Clothing.class);
+                                } else if (type == EquipmentType.WEAPON) {
+                                    item = doc.toObject(Weapon.class);
+                                }
+
+                                if (item != null) {
+                                    items.add(item);
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error parsing a general equipment item.", e);
+                            }
+                        });
+                        allItemsLiveData.setValue(items);
+                    } else {
+                        Log.w(TAG, "Error getting all equipment items.", task.getException());
+                    }
+                });
+
+        return allItemsLiveData;
     }
 }

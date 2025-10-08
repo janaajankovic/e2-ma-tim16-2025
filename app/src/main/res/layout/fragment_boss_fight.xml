@@ -10,13 +10,14 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/fight_ui_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        tools:visibility="visible">
 
         <com.airbnb.lottie.LottieAnimationView
             android:id="@+id/lottie_boss_animation"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            app:layout_constraintHeight_percent="0.35"
+            app:layout_constraintHeight_percent="0.3"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -61,152 +62,178 @@
             tools:text="160 / 200" />
 
 
-        <View
+        <ScrollView
             android:id="@+id/info_panel_background"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginTop="16dp"
-            app:layout_constraintTop_toBottomOf="@id/progress_bar_boss_hp"
+            android:layout_marginBottom="16dp"
             app:layout_constraintBottom_toTopOf="@id/button_attack"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginBottom="16dp"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/progress_bar_boss_hp">
 
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/guideline_vertical_center"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.5" />
-
-
-        <LinearLayout
-            android:id="@+id/user_stats_container"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal"
-            android:padding="8dp"
-            app:layout_constraintTop_toTopOf="@id/info_panel_background"
-            app:layout_constraintStart_toStartOf="@id/info_panel_background"
-            app:layout_constraintEnd_toStartOf="@id/guideline_vertical_center"
-            app:layout_constraintBottom_toBottomOf="@id/info_panel_background">
-
-            <TextView
-                android:id="@+id/label_user_pp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="YOUR PP"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-
-            <ProgressBar
-                android:id="@+id/progress_bar_user_pp"
-                style="@android:style/Widget.ProgressBar.Horizontal"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="12dp"
-                android:layout_marginTop="4dp"
-                android:progressTint="#2196F3"
-                android:scaleY="2"
-                tools:max="100"
-                tools:progress="75" />
-
-            <TextView
-                android:id="@+id/text_user_pp_value"
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@android:color/white"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                android:layout_marginTop="-11dp"
-                tools:text="75" />
+                android:orientation="vertical"
+                android:paddingBottom="8dp">
 
-            <TextView
-                android:id="@+id/text_attacks_remaining"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:gravity="center"
-                android:drawablePadding="4dp"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
-                app:drawableStartCompat="@drawable/ic_shield"
-                tools:text="5 / 5 Attacks" />
-
-            <TextView
-                android:id="@+id/text_hit_chance"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center"
-                android:drawablePadding="4dp"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
-                app:drawableStartCompat="@drawable/ic_target"
-                tools:text="67% Hit Chance" />
-        </LinearLayout>
-
-
-        <LinearLayout
-            android:id="@+id/equipment_rewards_container"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:orientation="vertical"
-            android:gravity="center_horizontal|top"
-            android:padding="8dp"
-            app:layout_constraintTop_toTopOf="@id/info_panel_background"
-            app:layout_constraintStart_toEndOf="@id/guideline_vertical_center"
-            app:layout_constraintEnd_toEndOf="@id/info_panel_background"
-            app:layout_constraintBottom_toBottomOf="@id/info_panel_background">
-
-            <TextView
-                android:id="@+id/label_active_equipment"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ACTIVE EQUIPMENT"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-
-            <LinearLayout
-                android:id="@+id/active_equipment_container"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:layout_marginTop="4dp"
-                android:gravity="center"
-                android:orientation="horizontal" />
-
-            <TextView
-                android:id="@+id/label_potential_rewards"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="POTENTIAL REWARDS"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-
-            <LinearLayout
-                android:id="@+id/potential_rewards_container"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_coins"
-                    app:tint="?attr/colorControlNormal"/>
-                <TextView
-                    android:id="@+id/text_potential_coins"
-                    android:layout_width="wrap_content"
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/user_stats_container"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
-                    tools:text="200" />
-                <LinearLayout
-                    android:id="@+id/potential_equipment_icons"
-                    android:layout_width="wrap_content"
+                    app:cardCornerRadius="12dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:id="@+id/label_user_pp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="YOUR POWER (PP)"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+
+                        <ProgressBar
+                            android:id="@+id/progress_bar_user_pp"
+                            style="@android:style/Widget.ProgressBar.Horizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="12dp"
+                            android:layout_marginTop="8dp"
+                            android:progressTint="#2196F3"
+                            android:scaleY="2"
+                            tools:max="100"
+                            tools:progress="75" />
+
+                        <TextView
+                            android:id="@+id/text_user_pp_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginTop="-11dp"
+                            android:textColor="@android:color/white"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            tools:text="75" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/text_attacks_remaining"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:drawablePadding="4dp"
+                                android:gravity="center"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                                app:drawableTopCompat="@drawable/ic_shield"
+                                tools:text="5 / 5" />
+
+                            <TextView
+                                android:id="@+id/text_hit_chance"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:drawablePadding="4dp"
+                                android:gravity="center"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                                app:drawableTopCompat="@drawable/ic_target"
+                                tools:text="67%" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/equipment_rewards_container"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:orientation="horizontal" />
+                    android:layout_marginTop="12dp"
+                    app:cardCornerRadius="12dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:id="@+id/label_active_equipment"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ACTIVE EQUIPMENT"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:scrollbars="none">
+                            <LinearLayout
+                                android:id="@+id/active_equipment_container"
+                                android:layout_width="wrap_content"
+                                android:layout_height="40dp"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal" />
+                        </HorizontalScrollView>
+
+                        <TextView
+                            android:id="@+id/label_potential_rewards"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:text="POTENTIAL REWARDS"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/potential_rewards_container"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:src="@drawable/ic_coins"
+                                    app:tint="?attr/colorControlNormal" />
+
+                                <TextView
+                                    android:id="@+id/text_potential_coins"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="4dp"
+                                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                                    android:textStyle="bold"
+                                    tools:text="200" />
+
+                                <LinearLayout
+                                    android:id="@+id/potential_equipment_icons"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="16dp"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal" />
+                            </LinearLayout>
+                        </HorizontalScrollView>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
             </LinearLayout>
-
-        </LinearLayout>
+        </ScrollView>
 
 
         <Button
@@ -221,13 +248,12 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/rewards_ui_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
-        tools:visibility="gone">
+        tools:visibility="visible">
 
         <TextView
             android:id="@+id/text_rewards_title"

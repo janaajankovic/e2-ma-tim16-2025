@@ -3,6 +3,7 @@ package com.example.habittrackerrpg.ui.bosses;
 import android.animation.Animator;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,6 +41,7 @@ public class BossFightFragment extends Fragment {
     private TaskViewModel taskViewModel;
     private ShakeDetector shakeDetector;
     private String currentBossIdleAnimation = null;
+    private BattleRewards finalRewards = null;
 
     @Nullable
     @Override
@@ -71,6 +73,7 @@ public class BossFightFragment extends Fragment {
         LiveData<List<TaskInstance>> instancesSource = taskViewModel.getTaskInstances();
         LiveData<List<EquipmentItem>> equipmentItemsSource = bossFightViewModel.getAllEquipmentItems();
         LiveData<List<UserEquipment>> inventorySource = bossFightViewModel.getUserInventory();
+        LiveData<List<EquipmentItem>> equipmentItemsNOVASource = bossFightViewModel.getAllEquipment();
 
         Runnable checkDataReady = () -> {
             isDataReady.setValue(
@@ -79,7 +82,8 @@ public class BossFightFragment extends Fragment {
                             tasksSource.getValue() != null &&
                             instancesSource.getValue() != null &&
                             equipmentItemsSource.getValue() != null &&
-                            inventorySource.getValue() != null
+                            inventorySource.getValue() != null &&
+                            equipmentItemsNOVASource.getValue() != null
             );
         };
 
@@ -89,6 +93,7 @@ public class BossFightFragment extends Fragment {
         isDataReady.addSource(instancesSource, instances -> checkDataReady.run());
         isDataReady.addSource(equipmentItemsSource, items -> checkDataReady.run());
         isDataReady.addSource(inventorySource, inventory -> checkDataReady.run());
+        isDataReady.addSource(equipmentItemsNOVASource, itemsNove -> checkDataReady.run());
 
         isDataReady.observe(getViewLifecycleOwner(), ready -> {
             if (ready != null && ready) {
@@ -165,13 +170,34 @@ public class BossFightFragment extends Fragment {
             }
         });
 
-        bossFightViewModel.getAllEquipmentItems().observe(getViewLifecycleOwner(), allItems -> {
+        bossFightViewModel.getAllEquipment().observe(getViewLifecycleOwner(), allItems -> {
             List<UserEquipment> inventory = bossFightViewModel.getUserInventory().getValue();
             displayActiveEquipment(inventory, allItems);
         });
 
         bossFightViewModel.getUserInventory().observe(getViewLifecycleOwner(), inventory -> {
-            List<EquipmentItem> allItems = bossFightViewModel.getAllEquipmentItems().getValue();
+            String TAG = "InventoryLog";
+            if (inventory == null) {
+                Log.d(TAG, "Active inventory is null.");
+            } else {
+                Log.d(TAG, "Active inventory updated. Count: " + inventory.size());
+                for (UserEquipment item : inventory) {
+                    Log.d(TAG, " -> Item - EquipmentID: " + item.getEquipmentId() + ", Type: " + item.getType());
+                }
+            }
+
+            List<EquipmentItem> allItems = bossFightViewModel.getAllEquipment().getValue();
+
+            String allItemsTag = "AllItemsLog";
+            if (allItems == null) {
+                Log.d(allItemsTag, "List of all equipment definitions is null.");
+            } else {
+                Log.d(allItemsTag, "List of all equipment definitions updated. Count: " + allItems.size());
+                for (EquipmentItem item : allItems) {
+                    Log.d(allItemsTag, " -> Definition - ID: " + item.getId() + ", Name: " + item.getName() + ", Type: " + item.getType());
+                }
+            }
+
             displayActiveEquipment(inventory, allItems);
         });
 
@@ -184,7 +210,7 @@ public class BossFightFragment extends Fragment {
         shakeDetector = new ShakeDetector(requireContext());
         shakeDetector.setOnShakeListener(() -> {
             Boolean isBattleFinished = bossFightViewModel.isBattleOver.getValue();
-            if (isBattleFinished != null && isBattleFinished) {
+            if (isBattleFinished != null && isBattleFinished  && finalRewards != null) {
                 if (!binding.lottieTreasureChest.isAnimating()) {
                     try {
                         final MediaPlayer mediaPlayer = MediaPlayer.create(getContext(), R.raw.chest_sound);
@@ -193,12 +219,50 @@ public class BossFightFragment extends Fragment {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+
+                    binding.lottieTreasureChest.addAnimatorListener(new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationEnd(@NonNull Animator animation) {
+                            displayFinalRewards(finalRewards);
+
+                            binding.lottieTreasureChest.removeAnimatorListener(this);
+                        }
+
+                        @Override public void onAnimationStart(@NonNull Animator animation) {}
+                        @Override public void onAnimationCancel(@NonNull Animator animation) {}
+                        @Override public void onAnimationRepeat(@NonNull Animator animation) {}
+                    });
+
                     binding.lottieTreasureChest.playAnimation();
                 }
             } else if (binding.buttonAttack.getVisibility() == View.VISIBLE) {
                 bossFightViewModel.performAttack();
             }
         });
+    }
+
+    private void displayFinalRewards(BattleRewards rewards) {
+        binding.textFinalRewardsInfo.setText("You won " + rewards.getCoinsAwarded() + " Coins!");
+        binding.textFinalRewardsInfo.setVisibility(View.VISIBLE);
+
+        if (rewards.getEquipmentAwarded() != null) {
+            EquipmentItem droppedItem = rewards.getEquipmentAwarded();
+            binding.textRewardEquipmentName.setText(droppedItem.getName());
+            binding.textRewardEquipmentName.setVisibility(View.VISIBLE);
+            binding.imageRewardEquipment.setVisibility(View.VISIBLE);
+
+            int iconResId = getResources().getIdentifier(
+                    droppedItem.getIcon(), "drawable", requireActivity().getPackageName()
+            );
+            if (iconResId != 0) {
+                binding.imageRewardEquipment.setImageResource(iconResId);
+            } else {
+                binding.imageRewardEquipment.setImageResource(R.drawable.ic_swords);
+            }
+        } else {
+            binding.textRewardEquipmentName.setVisibility(View.GONE);
+            binding.imageRewardEquipment.setVisibility(View.GONE);
+        }
     }
 
     private void setupClickListeners() {
@@ -272,26 +336,17 @@ public class BossFightFragment extends Fragment {
     }
 
     private void showRewardsState(BattleRewards rewards) {
+        this.finalRewards = rewards;
+
         binding.fightUiContainer.setVisibility(View.GONE);
         binding.rewardsUiContainer.setVisibility(View.VISIBLE);
-        binding.textFinalRewardsInfo.setText("You won " + rewards.getCoinsAwarded() + " Coins!");
-        if (rewards.getEquipmentAwarded() != null) {
-            EquipmentItem droppedItem = rewards.getEquipmentAwarded();
-            binding.textRewardEquipmentName.setText(droppedItem.getName());
-            binding.textRewardEquipmentName.setVisibility(View.VISIBLE);
-            binding.imageRewardEquipment.setVisibility(View.VISIBLE);
-            int iconResId = getResources().getIdentifier(
-                    droppedItem.getIcon(), "drawable", requireActivity().getPackageName()
-            );
-            if (iconResId != 0) {
-                binding.imageRewardEquipment.setImageResource(iconResId);
-            } else {
-                binding.imageRewardEquipment.setImageResource(R.drawable.ic_swords);
-            }
-        } else {
-            binding.textRewardEquipmentName.setVisibility(View.GONE);
-            binding.imageRewardEquipment.setVisibility(View.GONE);
-        }
+
+        binding.textRewardsTitle.setText("Battle Over!");
+        binding.lottieTreasureChest.setVisibility(View.VISIBLE);
+
+        binding.textFinalRewardsInfo.setVisibility(View.GONE);
+        binding.imageRewardEquipment.setVisibility(View.GONE);
+        binding.textRewardEquipmentName.setVisibility(View.GONE);
     }
 
     private void playAnimation(String fileName, boolean loop) {

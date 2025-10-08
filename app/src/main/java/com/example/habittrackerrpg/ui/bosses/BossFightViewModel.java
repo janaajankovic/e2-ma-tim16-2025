@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 public class BossFightViewModel extends AndroidViewModel {
 
@@ -74,6 +75,7 @@ public class BossFightViewModel extends AndroidViewModel {
     private long initialBossHp;
     private MutableLiveData<Boolean> _isBattleOver = new MutableLiveData<>(false);
     public LiveData<Boolean> isBattleOver = _isBattleOver;
+    private final LiveData<List<EquipmentItem>> allEquipmentShopItems;
     private final LiveData<List<EquipmentItem>> allEquipmentItems;
     private final LiveData<List<UserEquipment>> userInventory;
 
@@ -94,9 +96,12 @@ public class BossFightViewModel extends AndroidViewModel {
                 FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
 
         if (currentUid != null) {
-            this.allEquipmentItems = equipmentRepository.getShopItems();
+            this.allEquipmentShopItems = equipmentRepository.getClothingAndWeapons();
+            this.allEquipmentItems = equipmentRepository.getAllEquipmentItems();
             this.userInventory = equipmentRepository.getActiveUserInventory(currentUid);
+
         } else {
+            this.allEquipmentShopItems = new MutableLiveData<>(Collections.emptyList());
             this.allEquipmentItems = new MutableLiveData<>(Collections.emptyList());
             this.userInventory = new MutableLiveData<>(Collections.emptyList());
             Log.e(TAG, "User is not logged in, cannot fetch equipment data.");
@@ -104,9 +109,12 @@ public class BossFightViewModel extends AndroidViewModel {
     }
 
     public LiveData<List<EquipmentItem>> getAllEquipmentItems() {
-        return allEquipmentItems;
+        return allEquipmentShopItems;
     }
 
+    public LiveData<List<EquipmentItem>> getAllEquipment() {
+        return allEquipmentItems;
+    }
     public LiveData<List<UserEquipment>> getUserInventory() {
         return userInventory;
     }
@@ -127,36 +135,21 @@ public class BossFightViewModel extends AndroidViewModel {
         }
 
         Log.d(TAG, "--- Calculating Potential Rewards ---");
-        List<EquipmentItem> allItems = allEquipmentItems.getValue();
+        List<EquipmentItem> allItems = allEquipmentShopItems.getValue();
         Log.d(TAG, "allEquipmentItems list size: " + (allItems != null ? allItems.size() : "null"));
 
         if (allItems != null && !allItems.isEmpty()) {
             long maxCoins = calculateRewardsUseCase.calculateBaseCoinsForBoss(this.currentBoss.getLevel());
             Log.d(TAG, "Calculated max potential coins: " + maxCoins);
 
-            List<String> representativeIcons = new ArrayList<>();
+            List<String> potentialRewardIcons = allItems.stream()
+                    .filter(item -> item.getType() == EquipmentType.CLOTHING || item.getType() == EquipmentType.WEAPON)
+                    .map(EquipmentItem::getIcon)
+                    .collect(Collectors.toList());
 
-            Log.d(TAG, "Searching for a CLOTHING item to display...");
-            allItems.stream()
-                    .filter(item -> item.getType() == EquipmentType.CLOTHING)
-                    .findFirst()
-                    .ifPresent(item -> {
-                        Log.d(TAG, "Found clothing item for preview: " + item.getName());
-                        representativeIcons.add(item.getIcon());
-                    });
-
-            Log.d(TAG, "Searching for a WEAPON item to display...");
-            allItems.stream()
-                    .filter(item -> item.getType() == EquipmentType.WEAPON)
-                    .findFirst()
-                    .ifPresent(item -> {
-                        Log.d(TAG, "Found weapon item for preview: " + item.getName());
-                        representativeIcons.add(item.getIcon());
-                    });
-
-            Log.d(TAG, "Total representative icons found: " + representativeIcons.size());
-            Log.d(TAG, "Setting potential rewards. Coins: " + maxCoins + ", Icons: " + representativeIcons.toString());
-            _potentialRewards.setValue(new PotentialRewardsInfo(String.valueOf(maxCoins), representativeIcons));
+            Log.d(TAG, "Total potential reward icons found: " + potentialRewardIcons.size());
+            Log.d(TAG, "Setting potential rewards. Coins: " + maxCoins + ", Icons: " + potentialRewardIcons.toString());
+            _potentialRewards.setValue(new PotentialRewardsInfo(String.valueOf(maxCoins), potentialRewardIcons));
         } else {
             Log.w(TAG, "Cannot calculate potential rewards because allEquipmentItems is null or empty.");
         }
@@ -164,7 +157,6 @@ public class BossFightViewModel extends AndroidViewModel {
         this.initialBossHp = this.currentBoss.getHp();
         _currentBossHp.setValue(this.initialBossHp);
 
-        List<UserEquipment> inventory = userInventory.getValue();
         long calculatedPp = user.getPp();
         _userPp.setValue(calculatedPp);
 
@@ -194,7 +186,7 @@ public class BossFightViewModel extends AndroidViewModel {
 
     private void finishBattle() {
         long remainingHp = _currentBossHp.getValue();
-        List<EquipmentItem> allItems = allEquipmentItems.getValue();
+        List<EquipmentItem> allItems = allEquipmentShopItems.getValue();
         if (allItems == null) {
             allItems = new ArrayList<>();
         }
@@ -208,29 +200,6 @@ public class BossFightViewModel extends AndroidViewModel {
         _battleRewardsEvent.setValue(new Event<>(rewards));
         _isBattleOver.setValue(true);
         profileRepository.recordBossFightAttempt(currentBoss.getLevel() + 1);
-    }
-
-    private long calculateTotalUserPp(User user, List<UserEquipment> userEquipmentList, List<EquipmentItem> allEquipmentItems) {
-        AtomicLong totalPp = new AtomicLong(user.getPp());
-        Log.d(TAG, "Calculating PP. Base PP: " + totalPp);
-        if (userEquipmentList == null || allEquipmentItems == null) return totalPp.get();
-        for (UserEquipment ownedItem : userEquipmentList) {
-            if (ownedItem.isActive()) {
-                allEquipmentItems.stream()
-                        .filter(def -> def.getId().equals(ownedItem.getEquipmentId()))
-                        .findFirst()
-                        .ifPresent(equipmentDef -> {
-                            if (equipmentDef instanceof Potion) {
-                                Potion potion = (Potion) equipmentDef;
-                                long bonus = (long) (user.getPp() * (potion.getPpBoostPercent() / 100.0));
-                                Log.d(TAG, "Applying active Potion '" + potion.getName() + "' bonus: +" + bonus + " PP");
-                                totalPp.addAndGet(bonus);
-                            }
-                        });
-            }
-        }
-        Log.d(TAG, "Final calculated PP with equipment: " + totalPp);
-        return totalPp.get();
     }
 
     public void resetBattleState() {
