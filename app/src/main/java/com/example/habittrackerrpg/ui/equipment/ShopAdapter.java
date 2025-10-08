@@ -20,8 +20,8 @@ import java.util.Map;
 public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ShopViewHolder> {
 
     private List<EquipmentItem> items = new ArrayList<>();
-    private OnBuyButtonClickListener listener;
     private Map<String, Long> prices = new HashMap<>();
+    private OnBuyButtonClickListener listener;
 
     @NonNull
     @Override
@@ -52,7 +52,6 @@ public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ShopViewHolder
         notifyDataSetChanged();
     }
 
-    // ViewHolder klasa
     class ShopViewHolder extends RecyclerView.ViewHolder {
         private TextView textViewName, textViewDescription, textViewEffect, textViewCost;
         private Button buttonBuy;
@@ -75,7 +74,6 @@ public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ShopViewHolder
             });
         }
 
-        // Povezujemo podatke sa View-ovima
         public void bind(EquipmentItem item, Long price) {
             textViewName.setText(item.getName());
             textViewDescription.setText(item.getDescription());
@@ -84,15 +82,11 @@ public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ShopViewHolder
             } else {
                 textViewCost.setText("... Coins");
             }
-
-            if (item.getIcon() != null && !item.getIcon().isEmpty()) {
+            if (item.getIcon() != null && !item.getIcon().isEmpty() && itemView.getContext() != null) {
                 int iconId = itemView.getContext().getResources().getIdentifier(
                         item.getIcon(), "drawable", itemView.getContext().getPackageName());
-                if (iconId != 0) {
-                    imageViewIcon.setImageResource(iconId);
-                }
+                if (iconId != 0) imageViewIcon.setImageResource(iconId);
             }
-
             if (item instanceof Potion) {
                 Potion potion = (Potion) item;
                 String duration = potion.isPermanent() ? "Permanent" : "Single Use";
