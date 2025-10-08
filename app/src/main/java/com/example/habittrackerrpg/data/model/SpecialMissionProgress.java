@@ -8,6 +8,7 @@ public class SpecialMissionProgress {
     private String username;
     private long totalDamageDealt;
 
+    private String avatarId;
     private int shopPurchases;
     private int regularBossHits;
     private int taskCompletions;
@@ -16,7 +17,7 @@ public class SpecialMissionProgress {
 
     public SpecialMissionProgress() {}
 
-    public SpecialMissionProgress(String userId, String username) {
+    public SpecialMissionProgress(String userId, String username, String avatarId) {
         this.userId = userId;
         this.username = username;
         this.totalDamageDealt = 0;
@@ -25,6 +26,7 @@ public class SpecialMissionProgress {
         this.taskCompletions = 0;
         this.otherTaskCompletions = 0;
         this.dailyMessageDates = new ArrayList<>();
+        this.avatarId = avatarId;
     }
 
     public String getUserId() {
@@ -89,5 +91,13 @@ public class SpecialMissionProgress {
 
     public void setDailyMessageDates(List<String> dailyMessageDates) {
         this.dailyMessageDates = dailyMessageDates;
+    }
+
+    public String getAvatarId() {
+        return avatarId;
+    }
+
+    public void setAvatarId(String avatarId) {
+        this.avatarId = avatarId;
     }
 }

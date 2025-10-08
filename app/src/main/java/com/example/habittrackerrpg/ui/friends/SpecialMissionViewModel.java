@@ -11,6 +11,7 @@ import com.example.habittrackerrpg.data.model.Alliance;
 import com.example.habittrackerrpg.data.model.SpecialMission;
 import com.example.habittrackerrpg.data.model.SpecialMissionProgress;
 import com.example.habittrackerrpg.data.repository.AllianceRepository;
+import com.example.habittrackerrpg.data.repository.AllianceRepository;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;

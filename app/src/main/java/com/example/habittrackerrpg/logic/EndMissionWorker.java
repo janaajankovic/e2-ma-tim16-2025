@@ -6,9 +6,11 @@ import androidx.annotation.NonNull;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.example.habittrackerrpg.data.model.Clothing;
 import com.example.habittrackerrpg.data.model.EquipmentItem;
 import com.example.habittrackerrpg.data.model.EquipmentType;
 import com.example.habittrackerrpg.data.model.MissionStatus;
+import com.example.habittrackerrpg.data.model.Potion;
 import com.example.habittrackerrpg.data.model.SpecialMission;
 import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.data.model.UserEquipment;
@@ -52,15 +54,16 @@ public class EndMissionWorker extends Worker {
                 return Result.success();
             }
 
-            applyOverdueTasksBonus(mission);
+            WriteBatch batch = db.batch();
+            long bonusDamage = applyOverdueTasksBonus(mission, batch);
 
-            SpecialMission finalMissionState = Tasks.await(missionRef.get()).toObject(SpecialMission.class);
-            if (finalMissionState == null) return Result.failure();
+            long hpAfterBonus = Math.max(0, mission.getCurrentBossHp() - bonusDamage);
 
-            if (finalMissionState.getCurrentBossHp() <= 0) { // USPEH
-                Log.d(TAG, "Mission " + missionId + " was successful!");
-                WriteBatch rewardsBatch = db.batch();
-                rewardsBatch.update(missionRef, "status", MissionStatus.SUCCESS);
+            batch.update(missionRef, "currentBossHp", hpAfterBonus);
+
+            if (hpAfterBonus <= 0) { // USPEH
+                Log.d(TAG, "Mission " + missionId + " will be successful!");
+                batch.update(missionRef, "status", MissionStatus.SUCCESS.name());
 
                 QuerySnapshot progressSnapshot = Tasks.await(missionRef.collection("progress").get());
                 List<String> memberIds = new ArrayList<>();
@@ -68,8 +71,8 @@ public class EndMissionWorker extends Worker {
                     memberIds.add(doc.getId());
                 }
 
-                List<EquipmentItem> allPotions = Tasks.await(db.collection("shop_equipment").whereEqualTo("type", "POTION").get()).toObjects(EquipmentItem.class);
-                List<EquipmentItem> allClothing = Tasks.await(db.collection("shop_equipment").whereEqualTo("type", "CLOTHING").get()).toObjects(EquipmentItem.class);
+                List<Potion> allPotions = Tasks.await(db.collection("shop_equipment").whereEqualTo("type", "POTION").get()).toObjects(Potion.class);
+                List<Clothing> allClothing = Tasks.await(db.collection("shop_equipment").whereEqualTo("type", "CLOTHING").get()).toObjects(Clothing.class);
                 Random random = new Random();
 
                 for (String memberId : memberIds) {
@@ -80,26 +83,27 @@ public class EndMissionWorker extends Worker {
                     int nextBossLevel = user.getHighestBossDefeatedLevel() + 1;
                     long baseCoinReward = calculateBaseCoinsForBoss(nextBossLevel);
                     long finalCoinReward = baseCoinReward / 2;
-                    rewardsBatch.update(userRef, "coins", FieldValue.increment(finalCoinReward));
+                    batch.update(userRef, "coins", FieldValue.increment(finalCoinReward));
 
                     if (!allPotions.isEmpty()) {
-                        EquipmentItem potionReward = allPotions.get(random.nextInt(allPotions.size()));
+                        Potion potionReward = allPotions.get(random.nextInt(allPotions.size()));
                         UserEquipment userPotion = new UserEquipment(memberId, potionReward.getId(), EquipmentType.POTION);
-                        rewardsBatch.set(userRef.collection("inventory").document(), userPotion);
+                        batch.set(userRef.collection("inventory").document(), userPotion);
                     }
                     if (!allClothing.isEmpty()) {
-                        EquipmentItem clothingReward = allClothing.get(random.nextInt(allClothing.size()));
+                        Clothing clothingReward = allClothing.get(random.nextInt(allClothing.size()));
                         UserEquipment userClothing = new UserEquipment(memberId, clothingReward.getId(), EquipmentType.CLOTHING);
-                        rewardsBatch.set(userRef.collection("inventory").document(), userClothing);
+                        batch.set(userRef.collection("inventory").document(), userClothing);
                     }
-                    rewardsBatch.update(userRef, "successfulMissions", FieldValue.increment(1));
+
+                    batch.update(userRef, "successfulMissions", FieldValue.increment(1));
                 }
-                Tasks.await(rewardsBatch.commit());
+                Tasks.await(batch.commit());
                 Log.d(TAG, "Rewards distributed for mission " + missionId);
 
             } else {
-                Log.d(TAG, "Mission " + missionId + " failed. Final HP: " + finalMissionState.getCurrentBossHp());
-                Tasks.await(missionRef.update("status", MissionStatus.FAIL));
+                Log.d(TAG, "Mission " + missionId + " failed. Final HP: " + hpAfterBonus);
+                Tasks.await(missionRef.update("status", MissionStatus.FAIL.name()));
             }
 
             return Result.success();
@@ -109,16 +113,14 @@ public class EndMissionWorker extends Worker {
         }
     }
 
-    private void applyOverdueTasksBonus(SpecialMission mission) throws ExecutionException, InterruptedException {
+    private long applyOverdueTasksBonus(SpecialMission mission, WriteBatch batch) throws ExecutionException, InterruptedException {
         Log.d(TAG, "Applying 'No Overdue Tasks' bonus check...");
         QuerySnapshot progressSnapshot = Tasks.await(db.collection("specialMissions").document(mission.getId()).collection("progress").get());
 
-        WriteBatch bonusBatch = db.batch();
-        int totalBonusDamage = 0;
+        long totalBonusDamage = 0;
 
         for (DocumentSnapshot progressDoc : progressSnapshot.getDocuments()) {
             String memberId = progressDoc.getId();
-
             Query overdueQuery = db.collectionGroup("instances")
                     .whereEqualTo("userId", memberId)
                     .whereEqualTo("status", "UNCOMPLETED")
@@ -129,24 +131,22 @@ public class EndMissionWorker extends Worker {
             QuerySnapshot overdueResult = Tasks.await(overdueQuery.get());
 
             if (overdueResult.isEmpty()) {
-                Log.d(TAG, "User " + memberId + " had no overdue tasks. Applying 10 HP bonus damage.");
+                Log.d(TAG, "User " + memberId + " had no overdue tasks. Adding 10 HP bonus damage to batch.");
                 totalBonusDamage += 10;
 
                 DocumentReference progressRef = progressDoc.getReference();
-                bonusBatch.update(progressRef, "totalDamageDealt", FieldValue.increment(10));
+                batch.update(progressRef, "totalDamageDealt", FieldValue.increment(10));
             } else {
                 Log.d(TAG, "User " + memberId + " had overdue tasks. No bonus.");
             }
         }
 
         if (totalBonusDamage > 0) {
-            Log.d(TAG, "Total bonus damage from 'No Overdue Tasks': " + totalBonusDamage);
             DocumentReference missionRef = db.collection("specialMissions").document(mission.getId());
-            bonusBatch.update(missionRef, "currentBossHp", FieldValue.increment(-totalBonusDamage));
-            Tasks.await(bonusBatch.commit());
-        } else {
-            Log.d(TAG, "No users qualified for the 'No Overdue Tasks' bonus.");
+            batch.update(missionRef, "currentBossHp", FieldValue.increment(-totalBonusDamage));
         }
+
+        return totalBonusDamage;
     }
 
     private long calculateBaseCoinsForBoss(int bossLevel) {

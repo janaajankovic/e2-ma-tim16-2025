@@ -316,7 +316,8 @@ public class AllianceRepository {
         long bossHp = 100 * memberCount;
 
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_YEAR, 14);
+        //calendar.add(Calendar.DAY_OF_YEAR, 14);
+        calendar.add(Calendar.MINUTE, 2);
         Date endDate = calendar.getTime();
 
         SpecialMission mission = new SpecialMission(alliance.getId(), alliance.getLeaderId(), endDate, bossHp);
@@ -329,7 +330,7 @@ public class AllianceRepository {
         batch.update(allianceRef, "activeMissionId", missionRef.getId());
 
         for (AllianceMember member : alliance.getMembers().values()) {
-            SpecialMissionProgress progress = new SpecialMissionProgress(member.getUserId(), member.getUsername());
+            SpecialMissionProgress progress = new SpecialMissionProgress(member.getUserId(), member.getUsername(), member.getAvatarId());
             DocumentReference progressRef = missionRef.collection("progress").document(member.getUserId());
             batch.set(progressRef, progress);
         }
@@ -340,7 +341,8 @@ public class AllianceRepository {
             // Zakazujemo Worker da završi misiju za 14 dana
             Data inputData = new Data.Builder().putString("MISSION_ID", missionRef.getId()).build();
             OneTimeWorkRequest endMissionWorkRequest = new OneTimeWorkRequest.Builder(EndMissionWorker.class)
-                    .setInitialDelay(14, TimeUnit.DAYS)
+                    // .setInitialDelay(14, TimeUnit.DAYS)
+                    .setInitialDelay(2, TimeUnit.MINUTES)
                     .setInputData(inputData)
                     .build();
             WorkManager.getInstance(context).enqueue(endMissionWorkRequest);
@@ -353,6 +355,7 @@ public class AllianceRepository {
         String uid = mAuth.getCurrentUser().getUid();
         profileRepository.getUserLiveData().observeForever(user -> {
             if (user == null || user.getAllianceId() == null) return;
+
             db.collection("alliances").document(user.getAllianceId()).get().addOnSuccessListener(allianceDoc -> {
                 String missionId = allianceDoc.getString("activeMissionId");
                 if (missionId == null) return;
@@ -361,8 +364,9 @@ public class AllianceRepository {
                 DocumentReference missionRef = db.collection("specialMissions").document(missionId);
 
                 db.runTransaction(transaction -> {
+                    SpecialMission mission = transaction.get(missionRef).toObject(SpecialMission.class);
                     SpecialMissionProgress progress = transaction.get(progressRef).toObject(SpecialMissionProgress.class);
-                    if (progress == null) return null;
+                    if (progress == null || mission == null || mission.getCurrentBossHp() <= 0) return null;
 
                     boolean shouldDealDamage = false;
                     switch (actionType) {
@@ -401,9 +405,13 @@ public class AllianceRepository {
                     }
 
                     if (shouldDealDamage) {
+                        long currentHp = mission.getCurrentBossHp();
+                        long newHp = currentHp - damage;
+                        long finalHp = Math.max(0, newHp);
+
                         progress.setTotalDamageDealt(progress.getTotalDamageDealt() + damage);
                         transaction.set(progressRef, progress);
-                        transaction.update(missionRef, "currentBossHp", FieldValue.increment(-damage));
+                        transaction.update(missionRef, "currentBossHp", finalHp);
                     }
                     return null;
                 });

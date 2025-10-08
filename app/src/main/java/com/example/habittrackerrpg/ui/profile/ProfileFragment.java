@@ -1,5 +1,6 @@
 package com.example.habittrackerrpg.ui.profile;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
@@ -112,6 +113,7 @@ public class ProfileFragment extends Fragment {
         }
     }
 
+    @SuppressLint("StringFormatMatches")
     private void updateUI(User user) {
         if (user == null) return;
         if (user.getAvatarId() != null) {
@@ -127,8 +129,7 @@ public class ProfileFragment extends Fragment {
         binding.textViewXp.setText(getString(R.string.xp_text, user.getXp()));
         binding.textViewPp.setText(getString(R.string.pp_text, user.getTotalPp()));
         binding.textViewCoins.setText(getString(R.string.coins_text, user.getCoins()));
-
-        binding.textViewBadges.setText(getString(R.string.profile_badges) + " 0");
+        binding.textViewBadges.setText(getString(R.string.badges_text, user.getSuccessfulMissions()));
 
 
         binding.imageViewQrCode.setVisibility(View.VISIBLE);
