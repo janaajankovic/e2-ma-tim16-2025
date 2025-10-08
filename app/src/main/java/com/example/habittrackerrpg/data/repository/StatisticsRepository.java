@@ -3,6 +3,8 @@ package com.example.habittrackerrpg.data.repository;
 import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
+import com.example.habittrackerrpg.data.model.SpecialMission;
 import com.example.habittrackerrpg.data.model.Task;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -31,5 +33,30 @@ public class StatisticsRepository {
         });
 
         return tasksLiveData;
+    }
+
+    public LiveData<List<SpecialMission>> getAllUserMissions(String allianceId) {
+        MutableLiveData<List<SpecialMission>> missionsLiveData = new MutableLiveData<>();
+        if (allianceId == null || allianceId.isEmpty()) {
+            missionsLiveData.setValue(new ArrayList<>());
+            return missionsLiveData;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("specialMissions")
+                .whereEqualTo("allianceId", allianceId)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (queryDocumentSnapshots != null) {
+                        List<SpecialMission> missions = queryDocumentSnapshots.toObjects(SpecialMission.class);
+                        missionsLiveData.setValue(missions);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("StatisticsRepository", "Error getting user missions by alliance", e);
+                    missionsLiveData.setValue(new ArrayList<>());
+                });
+
+        return missionsLiveData;
     }
 }
