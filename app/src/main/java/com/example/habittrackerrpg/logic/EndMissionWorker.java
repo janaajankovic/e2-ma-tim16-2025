@@ -7,7 +7,6 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.example.habittrackerrpg.data.model.Clothing;
-import com.example.habittrackerrpg.data.model.EquipmentItem;
 import com.example.habittrackerrpg.data.model.EquipmentType;
 import com.example.habittrackerrpg.data.model.MissionStatus;
 import com.example.habittrackerrpg.data.model.Potion;
@@ -55,21 +54,18 @@ public class EndMissionWorker extends Worker {
             }
 
             WriteBatch batch = db.batch();
+
             long bonusDamage = applyOverdueTasksBonus(mission, batch);
-
             long hpAfterBonus = Math.max(0, mission.getCurrentBossHp() - bonusDamage);
-
             batch.update(missionRef, "currentBossHp", hpAfterBonus);
 
-            if (hpAfterBonus <= 0) { // USPEH
+            if (hpAfterBonus <= 0) {
                 Log.d(TAG, "Mission " + missionId + " will be successful!");
                 batch.update(missionRef, "status", MissionStatus.SUCCESS.name());
 
                 QuerySnapshot progressSnapshot = Tasks.await(missionRef.collection("progress").get());
                 List<String> memberIds = new ArrayList<>();
-                for (DocumentSnapshot doc : progressSnapshot.getDocuments()) {
-                    memberIds.add(doc.getId());
-                }
+                for (DocumentSnapshot doc : progressSnapshot.getDocuments()) { memberIds.add(doc.getId()); }
 
                 List<Potion> allPotions = Tasks.await(db.collection("shop_equipment").whereEqualTo("type", "POTION").get()).toObjects(Potion.class);
                 List<Clothing> allClothing = Tasks.await(db.collection("shop_equipment").whereEqualTo("type", "CLOTHING").get()).toObjects(Clothing.class);
@@ -95,21 +91,50 @@ public class EndMissionWorker extends Worker {
                         UserEquipment userClothing = new UserEquipment(memberId, clothingReward.getId(), EquipmentType.CLOTHING);
                         batch.set(userRef.collection("inventory").document(), userClothing);
                     }
-
                     batch.update(userRef, "successfulMissions", FieldValue.increment(1));
                 }
-                Tasks.await(batch.commit());
-                Log.d(TAG, "Rewards distributed for mission " + missionId);
+
+                Log.d(TAG, "Rewards prepared for distribution.");
 
             } else {
                 Log.d(TAG, "Mission " + missionId + " failed. Final HP: " + hpAfterBonus);
-                Tasks.await(missionRef.update("status", MissionStatus.FAIL.name()));
+                batch.update(missionRef, "status", MissionStatus.FAIL.name());
             }
+
+            Log.d(TAG, "Resetting activeMissionId for alliance: " + mission.getAllianceId());
+            DocumentReference allianceRef = db.collection("alliances").document(mission.getAllianceId());
+            batch.update(allianceRef, "activeMissionId", null);
+
+            Tasks.await(batch.commit());
+            Log.d(TAG, "All database operations committed successfully.");
+
+            sendNotifications(mission, hpAfterBonus);
 
             return Result.success();
         } catch (ExecutionException | InterruptedException e) {
             Log.e(TAG, "Error executing mission end task", e);
             return Result.retry();
+        }
+    }
+
+    private void sendNotifications(SpecialMission mission, long finalHp) throws ExecutionException, InterruptedException {
+        QuerySnapshot progressSnapshot = Tasks.await(db.collection("specialMissions").document(mission.getId()).collection("progress").get());
+        List<String> memberIds = new ArrayList<>();
+        for (DocumentSnapshot doc : progressSnapshot.getDocuments()) { memberIds.add(doc.getId()); }
+
+        String title;
+        String message;
+
+        if (finalHp <= 0) {
+            title = "Mission Successful!";
+            message = "Your alliance has defeated the boss! Check your profile for new rewards and a badge.";
+        } else {
+            title = "Mission Failed";
+            message = "Your alliance did not defeat the boss in time. Better luck next time!";
+        }
+
+        for (String memberId : memberIds) {
+            NotificationSender.sendSimpleNotification(getApplicationContext(), memberId, title, message);
         }
     }
 

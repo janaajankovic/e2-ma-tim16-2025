@@ -12,8 +12,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.habittrackerrpg.databinding.FragmentSpecialMissionBinding;
-import com.example.habittrackerrpg.ui.friends.MemberProgressAdapter;
-import com.example.habittrackerrpg.ui.friends.SpecialMissionViewModel;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -36,13 +34,9 @@ public class SpecialMissionFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Inicijalizacija ViewModel-a
         viewModel = new ViewModelProvider(this).get(SpecialMissionViewModel.class);
 
-        // Podešavanje RecyclerView-a
         setupRecyclerView();
-
-        // Povezivanje observera
         observeViewModel();
     }
 
@@ -53,10 +47,8 @@ public class SpecialMissionFragment extends Fragment {
     }
 
     private void observeViewModel() {
-        // Observer za glavne detalje misije (HP Bosa, Vreme)
         viewModel.missionDetails.observe(getViewLifecycleOwner(), mission -> {
             if (mission == null) {
-                // TODO: Prikazati poruku da misija nije aktivna
                 return;
             }
 
@@ -66,7 +58,6 @@ public class SpecialMissionFragment extends Fragment {
             binding.progressBarMissionBossHp.setProgress((int) progress);
             binding.textViewMissionBossHp.setText(String.format(Locale.getDefault(), "%d / %d", progress, max));
 
-            // Pokretanje ili ažuriranje tajmera
             long millisLeft = mission.getEndDate().getTime() - System.currentTimeMillis();
             if (millisLeft > 0) {
                 startTimer(millisLeft);
@@ -75,17 +66,14 @@ public class SpecialMissionFragment extends Fragment {
             }
         });
 
-        // Observer za lični napredak
         viewModel.myProgress.observe(getViewLifecycleOwner(), progress -> {
             if (progress == null) return;
             binding.textViewMyDamage.setText("Total Damage: " + progress.getTotalDamageDealt() + " HP");
             binding.textViewMyShop.setText("Shop Purchases: " + progress.getShopPurchases() + "/5");
             binding.textViewMyBossHits.setText("Regular Boss Hits: " + progress.getRegularBossHits() + "/10");
             binding.textViewMyTaskCompletions.setText("Task Completions: " + progress.getTaskCompletions() + "/10");
-            // ... ažurirajte i ostale TextView-ove za lične brojače ...
         });
 
-        // Observer za listu svih članova (leaderboard)
         viewModel.allMembersProgress.observe(getViewLifecycleOwner(), progressList -> {
             if (progressList != null) {
                 memberProgressAdapter.submitList(progressList);
