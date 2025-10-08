@@ -89,6 +89,25 @@
                 android:text="Leave Alliance"
                 android:visibility="gone"
                 tools:visibility="visible"/>
+
+            <Button
+                android:id="@+id/buttonStartSpecialMission"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Start Special Mission"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <Button
+                android:id="@+id/buttonViewSpecialMission"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:text="View Special Mission"
+                android:visibility="gone"
+                tools:visibility="visible"/>
         </LinearLayout>
 
         <LinearLayout

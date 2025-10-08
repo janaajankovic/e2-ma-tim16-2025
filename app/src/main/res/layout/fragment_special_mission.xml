@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.friends.SpecialMissionFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/textViewMissionTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Alliance Mission"
+            android:textAppearance="@style/TextAppearance.Material3.DisplaySmall" />
+
+        <TextView
+            android:id="@+id/textViewTimeRemaining"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+            tools:text="Time Remaining: 13d 23h 59m" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="MISSION BOSS HP"
+            android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+
+        <ProgressBar
+            android:id="@+id/progressBarMissionBossHp"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"
+            android:layout_marginTop="4dp"
+            android:progressTint="@color/action_color_cancel"
+            android:scaleY="4"
+            tools:progress="65" />
+
+        <TextView
+            android:id="@+id/textViewMissionBossHp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="-20dp"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            tools:text="650 / 1000" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:cardCornerRadius="8dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="My Contribution"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+
+                <TextView android:id="@+id/textViewMyDamage" android:layout_width="wrap_content" android:layout_height="wrap_content" tools:text="Total Damage: 120 HP"/>
+                <TextView android:id="@+id/textViewMyShop" android:layout_width="wrap_content" android:layout_height="wrap_content" tools:text="Shop Purchases: 2/5"/>
+                <TextView android:id="@+id/textViewMyBossHits" android:layout_width="wrap_content" android:layout_height="wrap_content" tools:text="Regular Boss Hits: 4/10"/>
+                <TextView android:id="@+id/textViewMyTaskCompletions" android:layout_width="wrap_content" android:layout_height="wrap_content" tools:text="Task Completions: 8/10"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Member Contributions"
+            android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewMemberProgress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:nestedScrollingEnabled="false"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:itemCount="5"
+            tools:listitem="@layout/item_mission_progress" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

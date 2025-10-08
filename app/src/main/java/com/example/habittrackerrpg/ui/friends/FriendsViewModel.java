@@ -220,4 +220,14 @@ public class FriendsViewModel extends AndroidViewModel {
             allianceRepository.sendMessage(currentAlliance.getId(), message);
         }
     }
+
+    public void startSpecialMission() {
+        Alliance currentAlliance = this.currentAlliance.getValue();
+        if (currentAlliance != null) {
+            allianceRepository.startSpecialMission(currentAlliance);
+            toastMessage.setValue(new Event<>("Special mission has been started!"));
+        } else {
+            toastMessage.setValue(new Event<>("Error: Alliance data not available."));
+        }
+    }
 }

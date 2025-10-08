@@ -44,9 +44,6 @@ public class User {
         this.totalAttackChanceBonus = 0.0;
         this.totalExtraAttacks = 0;
         this.successfulMissions = 0;
-
-
-
         this.highestBossDefeatedLevel = 0;
         this.lastLevelUpTimestamp = new Date();
     }

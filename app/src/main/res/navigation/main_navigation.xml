@@ -97,6 +97,9 @@
             android:id="@+id/action_friends_to_chat"
             app:destination="@id/nav_alliance_chat" />
 
+        <action
+            android:id="@+id/action_friendsHostFragment_to_specialMissionFragment"
+            app:destination="@id/specialMissionFragment" />
     </fragment>
 
     <fragment
@@ -152,5 +155,10 @@
         android:label="Manage Categories"
         tools:layout="@layout/fragment_manage_categories" />
 
+    <fragment
+        android:id="@+id/specialMissionFragment"
+        android:name="com.example.habittrackerrpg.ui.friends.SpecialMissionFragment"
+        android:label="Special Mission"
+        tools:layout="@layout/fragment_special_mission" />
 
 </navigation>

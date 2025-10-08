@@ -50,6 +50,19 @@ public class MyFriendsFragment extends Fragment {
         binding.buttonGoToChat.setOnClickListener(v -> {
             Navigation.findNavController(v).navigate(R.id.nav_alliance_chat);
         });
+
+        binding.buttonStartSpecialMission.setOnClickListener(v -> {
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Start Special Mission?")
+                    .setMessage("This will start a 2-week mission for the entire alliance. This action cannot be undone.")
+                    .setPositiveButton("Start", (dialog, which) -> viewModel.startSpecialMission())
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
+
+        binding.buttonViewSpecialMission.setOnClickListener(v -> {
+            Navigation.findNavController(v).navigate(R.id.action_friendsHostFragment_to_specialMissionFragment);
+        });
     }
 
     private void setupRecyclerViews() {
@@ -132,6 +145,13 @@ public class MyFriendsFragment extends Fragment {
                                     .show();
                         });
                     }
+
+                    boolean isLeader = alliance.getLeaderId().equals(currentUser.getId());
+                    boolean isMissionActive = alliance.getActiveMissionId() != null;
+
+                    binding.buttonStartSpecialMission.setVisibility(isLeader && !isMissionActive ? View.VISIBLE : View.GONE);
+                    binding.buttonViewSpecialMission.setVisibility(isMissionActive ? View.VISIBLE : View.GONE);
+
                 } else {
                     binding.buttonAllianceAction.setVisibility(View.GONE);
                 }
