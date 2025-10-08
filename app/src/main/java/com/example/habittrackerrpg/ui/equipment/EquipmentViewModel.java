@@ -42,8 +42,6 @@ public class EquipmentViewModel extends AndroidViewModel {
         calculatedPrices.addSource(shopItems, items -> calculatePrices());
     }
 
-    // --- GLAVNE AKCIJE ---
-
     public void buyItem(EquipmentItem itemToBuy) {
         User user = currentUser.getValue();
         if (user == null) {
@@ -51,7 +49,6 @@ public class EquipmentViewModel extends AndroidViewModel {
             return;
         }
 
-        // Računamo cenu ponovo u trenutku kupovine, tačno po specifikaciji
         int levelForPriceCalc = (user.getLevel() > 1) ? user.getLevel() - 1 : 1;
         long previousLevelReward = calculateBossRewardForLevel(levelForPriceCalc);
         long currentPrice = (long) (previousLevelReward * (itemToBuy.getCost() / 100.0));
@@ -86,11 +83,9 @@ public class EquipmentViewModel extends AndroidViewModel {
         if (definition instanceof Potion) {
             Potion potion = (Potion) definition;
             if (potion.isPermanent()) {
-                // 1. Ažuriraj trajni bonus na LOKALNOM user objektu
                 double currentBonus = user.getPermanentPpBonusPercent();
                 user.setPermanentPpBonusPercent(currentBonus + (potion.getPpBoostPercent() / 100.0));
 
-                // 2. Obriši napitak, a NAKON toga sačuvaj korisnika sa preračunatim statistikama
                 equipmentRepository.deleteUserEquipment(itemToActivate.getId(), success -> {
                     if (success) recalculateAndSaveStats();
                 });
@@ -114,7 +109,6 @@ public class EquipmentViewModel extends AndroidViewModel {
             }
         }
 
-        // Za odeću i privremene napitke, samo postavi 'isActive' i preračunaj
         itemToActivate.setActive(true);
         equipmentRepository.updateUserEquipment(itemToActivate, success -> {
             if (success) recalculateAndSaveStats();
@@ -144,7 +138,6 @@ public class EquipmentViewModel extends AndroidViewModel {
         toastMessage.setValue(new Event<>("Weapon upgraded successfully!"));
     }
 
-    // --- "MOZAK" ZA PRORAČUN STATISTIKA ---
     private void recalculateAndSaveStats() {
         User user = currentUser.getValue();
         List<UserEquipment> inventory = userInventory.getValue();
@@ -161,7 +154,6 @@ public class EquipmentViewModel extends AndroidViewModel {
         int extraAttacks = 0;
         double coinBonusPercent = 0.0;
 
-        // Počni proračun od osnovnog 'pp' i trajnog bonusa od napitaka
         double calculatedPp = user.getPp() * (1 + user.getPermanentPpBonusPercent());
 
         for (UserEquipment userItem : inventory) {
@@ -170,7 +162,7 @@ public class EquipmentViewModel extends AndroidViewModel {
 
             if (def instanceof Weapon) {
                 Weapon weapon = (Weapon) def;
-                double totalWeaponBonus = weapon.getEffectValue() + userItem.getCurrentUpgradeBonus();
+                double totalWeaponBonus = weapon.getEffectValue() + (userItem.getCurrentUpgradeBonus() * 100.0);
                 switch (weapon.getWeaponType()) {
                     case SWORD:
                         calculatedPp *= (1 + (totalWeaponBonus / 100.0));
@@ -199,12 +191,21 @@ public class EquipmentViewModel extends AndroidViewModel {
         user.setTotalPp((long) calculatedPp);
         user.setTotalAttackChanceBonus(attackChanceBonus / 100.0);
         user.setTotalExtraAttacks(extraAttacks);
-        //user.setPermanentCoinBonusPercent(coinBonusPercent / 100.0);
+        user.setPermanentCoinBonusPercent(coinBonusPercent / 100.0);
 
         profileRepository.updateUser(user);
     }
 
-    // --- POMOĆNE METODE I GETTERI ---
+    public long getWeaponUpgradeCost() {
+        User user = currentUser.getValue();
+        if (user == null) return 0;
+
+        int levelForPriceCalc = (user.getLevel() > 1) ? user.getLevel() - 1 : 1;
+        long previousLevelReward = calculateBossRewardForLevel(levelForPriceCalc);
+
+        return (long) (previousLevelReward * 0.60);
+    }
+
     private void calculatePrices() {
         User user = currentUser.getValue();
         List<EquipmentItem> items = shopItems.getValue();

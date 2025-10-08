@@ -51,6 +51,7 @@ public class EquipmentDetailFragment extends Fragment {
     }
 
     private void setupObservers() {
+        viewModel.getCurrentUser().observe(getViewLifecycleOwner(), user -> updateUi());
         viewModel.getUserInventory().observe(getViewLifecycleOwner(), inventory -> updateUi());
         viewModel.getShopItems().observe(getViewLifecycleOwner(), shopItems -> updateUi());
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), event -> {
@@ -63,86 +64,85 @@ public class EquipmentDetailFragment extends Fragment {
     }
 
     private void updateUi() {
-        if (userEquipmentId == null || viewModel.getUserInventory().getValue() == null || viewModel.getShopItems().getValue() == null) {
+        if (userEquipmentId == null || viewModel.getUserInventory().getValue() == null ||
+                viewModel.getShopItems().getValue() == null || viewModel.getCurrentUser().getValue() == null) {
             return;
         }
-
-        // 1. Pronađi predmet u korisnikovom inventaru po ID-ju
         Optional<UserEquipment> userItemOpt = viewModel.getUserInventory().getValue().stream()
                 .filter(item -> userEquipmentId.equals(item.getId()))
                 .findFirst();
 
         if (!userItemOpt.isPresent()) {
-            // Ako predmet iz nekog razloga više ne postoji u inventaru, ne radi ništa
             return;
         }
         UserEquipment userItem = userItemOpt.get();
 
-        // 2. Pokušaj da pronađeš definiciju predmeta u listi iz prodavnice
         Optional<EquipmentItem> definitionOpt = viewModel.getShopItems().getValue().stream()
-                .filter(item -> userItem.getEquipmentId().equals(item.getId()))
+                .filter(def -> userItem.getEquipmentId().equals(def.getId()))
                 .findFirst();
 
         if (definitionOpt.isPresent()) {
-            // SLUČAJ 1: Predmet je pronađen u prodavnici (Napitak ili Odeća)
             EquipmentItem definition = definitionOpt.get();
+
             binding.textViewItemName.setText(definition.getName());
             binding.textViewItemDescription.setText(definition.getDescription());
-
-            if (userItem.getType() == EquipmentType.POTION) {
-                Potion potion = (Potion) definition;
-                binding.textViewItemEffect.setText(String.format("Effect: +%d%% PP", potion.getPpBoostPercent()));
-                binding.textViewItemState.setText(potion.isPermanent() ? "Type: Permanent Potion" : "Type: Single-Use Potion");
-                binding.buttonActivate.setVisibility(View.VISIBLE);
-                binding.buttonUpgrade.setVisibility(View.GONE);
-            } else if (userItem.getType() == EquipmentType.CLOTHING) {
-                Clothing clothing = (Clothing) definition;
-                binding.textViewItemEffect.setText(String.format("Effect: +%d%% %s bonus", clothing.getEffectValue(), clothing.getClothingType().name()));
-                String state = userItem.isActive()
-                        ? "State: Active (" + userItem.getBattlesRemaining() + " battles left)"
-                        : "State: In Inventory";
-                binding.textViewItemState.setText(state);
-                binding.buttonActivate.setVisibility(View.VISIBLE);
-                binding.buttonUpgrade.setVisibility(View.GONE);
+            if (definition.getIcon() != null && !definition.getIcon().isEmpty() && getContext() != null) {
+                int iconId = getContext().getResources().getIdentifier(definition.getIcon(), "drawable", getContext().getPackageName());
+                if (iconId != 0) {
+                    binding.imageViewItemIcon.setImageResource(iconId);
+                }
             }
 
-        } else if (userItem.getType() == EquipmentType.WEAPON) {
-            // SLUČAJ 2: Definicija nije u prodavnici, pretpostavljamo da je Oružje
-            binding.textViewItemName.setText("Weapon"); // Privremeni naziv
-            binding.textViewItemDescription.setText("This powerful item is won in battle."); // Privremeni opis
-            binding.textViewItemEffect.setText(String.format("Current Bonus: +%.2f%%", userItem.getCurrentUpgradeBonus()));
-            binding.textViewItemState.setText("State: Always Active");
-            binding.buttonActivate.setVisibility(View.GONE);
-            binding.buttonUpgrade.setVisibility(View.VISIBLE);
-        }
+            if (userItem.getType() == EquipmentType.WEAPON) {
+                Weapon weaponDef = (Weapon) definition;
+                double totalBonus = weaponDef.getEffectValue() + (userItem.getCurrentUpgradeBonus() * 100);
 
-        EquipmentItem definition = definitionOpt.get();
+                switch(weaponDef.getWeaponType()) {
+                    case SWORD:
+                        binding.textViewItemEffect.setText(String.format("Current bonus: +%.2f%% power", totalBonus));
+                        break;
+                    case BOW_AND_ARROW:
+                        binding.textViewItemEffect.setText(String.format("Current bonus: +%.2f%% more coins", totalBonus));
+                        break;
+                }
 
-        if (definition.getIcon() != null && !definition.getIcon().isEmpty() && getContext() != null) {
-            int iconId = getContext().getResources().getIdentifier(
-                    definition.getIcon(), "drawable", getContext().getPackageName());
-            if (iconId != 0) {
-                binding.imageViewItemIcon.setImageResource(iconId);
+                binding.textViewItemState.setText("State: Always active");
+                binding.buttonActivate.setVisibility(View.GONE);
+                binding.buttonUpgrade.setVisibility(View.VISIBLE);
+
+                long upgradeCost = viewModel.getWeaponUpgradeCost();
+                binding.buttonUpgrade.setText("Upgrade (" + upgradeCost + " coins)");
+
+                binding.buttonUpgrade.setOnClickListener(v -> viewModel.upgradeWeapon(userItem));
+
+            } else {
+                binding.buttonActivate.setVisibility(View.VISIBLE);
+                binding.buttonUpgrade.setVisibility(View.GONE);
+
+                if(userItem.getType() == EquipmentType.POTION) {
+                    Potion potion = (Potion) definition;
+                    binding.textViewItemEffect.setText(String.format("Effect: +%d%% PP", potion.getPpBoostPercent()));
+                    binding.textViewItemState.setText(potion.isPermanent() ? "Type: Permanent Potion" : "Type: Single-Use Potion");
+                } else if (userItem.getType() == EquipmentType.CLOTHING) {
+                    Clothing clothing = (Clothing) definition;
+                    binding.textViewItemEffect.setText(String.format("Effect: +%d%% %s bonus", clothing.getEffectValue(), clothing.getClothingType().name().toLowerCase()));
+                    String state = userItem.isActive()
+                            ? "State: Active (" + userItem.getBattlesRemaining() + " battles remaining)"
+                            : "State: In Inventory";
+                    binding.textViewItemState.setText(state);
+                }
+
+                if (userItem.isActive()) {
+                    binding.buttonActivate.setEnabled(false);
+                    binding.buttonActivate.setText("Activated");
+                } else {
+                    binding.buttonActivate.setEnabled(true);
+                    binding.buttonActivate.setText("Activate");
+                }
+                binding.buttonActivate.setOnClickListener(v -> viewModel.activateItem(userItem));
             }
         }
-
-        if (userItem.isActive()) {
-            binding.buttonActivate.setEnabled(false);
-            binding.buttonActivate.setText("Activated");
-        } else {
-            binding.buttonActivate.setEnabled(true);
-            binding.buttonActivate.setText("Activate");
-        }
-
-        binding.buttonActivate.setOnClickListener(v -> {
-            viewModel.activateItem(userItem);
-        });
-
-        binding.buttonUpgrade.setOnClickListener(v -> {
-            Toast.makeText(getContext(), "Upgrade logic not implemented yet.", Toast.LENGTH_SHORT).show();
-        });
     }
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
