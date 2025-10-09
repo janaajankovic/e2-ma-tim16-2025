@@ -30,16 +30,12 @@ public class EquipmentRepository {
     public EquipmentRepository(Context context) {
         this.allianceRepository = new AllianceRepository(context);
     }
-
-    // --- INTERFEJSI ZA CALLBACK ---
     public interface BuyItemCallback {
         void onResult(boolean success, String message);
     }
     public interface CompletionCallback {
         void onComplete(boolean success);
     }
-
-    // --- METODE ---
 
     public LiveData<List<EquipmentItem>> getShopItems() {
         MutableLiveData<List<EquipmentItem>> shopItemsLiveData = new MutableLiveData<>();
