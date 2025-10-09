@@ -120,7 +120,6 @@ public class MyFriendsFragment extends Fragment {
                 allianceMemberAdapter.setData(new ArrayList<>(alliance.getMembers().values()), alliance.getLeaderId());
 
                 User currentUser = viewModel.getCurrentUserData().getValue();
-                binding.buttonInviteFriends.setVisibility(View.GONE);
 
                 if (currentUser != null) {
                     binding.buttonAllianceAction.setVisibility(View.VISIBLE);
@@ -149,7 +148,7 @@ public class MyFriendsFragment extends Fragment {
 
                     boolean isLeader = alliance.getLeaderId().equals(currentUser.getId());
                     boolean isMissionActive = alliance.getActiveMissionId() != null;
-
+                    binding.buttonInviteFriends.setVisibility(isLeader ? View.VISIBLE : View.GONE);
                     binding.buttonStartSpecialMission.setVisibility(isLeader && !isMissionActive ? View.VISIBLE : View.GONE);
                     binding.buttonViewSpecialMission.setVisibility(isMissionActive ? View.VISIBLE : View.GONE);
 
