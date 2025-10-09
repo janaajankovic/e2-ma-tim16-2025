@@ -10,8 +10,13 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.habittrackerrpg.data.model.Clothing;
+import com.example.habittrackerrpg.data.model.EquipmentItem;
+import com.example.habittrackerrpg.data.model.EquipmentType;
 import com.example.habittrackerrpg.data.model.Potion;
 import com.example.habittrackerrpg.databinding.FragmentShopBinding;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ShopFragment extends Fragment {
 
@@ -50,7 +55,11 @@ public class ShopFragment extends Fragment {
     private void setupObservers() {
         viewModel.getShopItems().observe(getViewLifecycleOwner(), items -> {
             if (items != null) {
-                adapter.setItems(items);
+                List<EquipmentItem> itemsForSale = items.stream()
+                        .filter(item -> item.getType() != EquipmentType.WEAPON)
+                        .collect(Collectors.toList());
+
+                adapter.setItems(itemsForSale);
             }
         });
 
@@ -60,12 +69,14 @@ public class ShopFragment extends Fragment {
             }
         });
 
+        // Observer za stanje novčića
         viewModel.getCurrentUser().observe(getViewLifecycleOwner(), user -> {
             if (user != null) {
                 binding.textViewCoinBalance.setText(String.format("Coins: %d", user.getCoins()));
             }
         });
 
+        // Observer za poruke
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), event -> {
             String message = event.getContentIfNotHandled();
             if (message != null) {

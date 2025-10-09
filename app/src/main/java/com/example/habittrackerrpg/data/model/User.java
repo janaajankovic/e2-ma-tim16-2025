@@ -27,6 +27,7 @@ public class User {
     private int lastBossFightAttemptLevel;
     private String allianceId;
     private int successfulMissions;
+    private double permanentCoinBonusPercent;
 
     public User() {
     }
@@ -121,5 +122,12 @@ public class User {
 
     public void setSuccessfulMissions(int successfulMissions) {
         this.successfulMissions = successfulMissions;
+    }
+    public double getPermanentCoinBonusPercent() {
+        return permanentCoinBonusPercent;
+    }
+
+    public void setPermanentCoinBonusPercent(double permanentCoinBonusPercent) {
+        this.permanentCoinBonusPercent = permanentCoinBonusPercent;
     }
 }

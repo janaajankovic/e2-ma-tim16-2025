@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -82,6 +83,8 @@ public class BossFightViewModel extends AndroidViewModel {
     private final LiveData<List<UserEquipment>> userInventory;
 
     private final AllianceRepository allianceRepository;
+    private MutableLiveData<Integer> _maxAttacks = new MutableLiveData<>();
+    public LiveData<Integer> maxAttacks = _maxAttacks;
 
     public BossFightViewModel(@NonNull Application application) {
         super(application);
@@ -159,11 +162,15 @@ public class BossFightViewModel extends AndroidViewModel {
         this.initialBossHp = this.currentBoss.getHp();
         _currentBossHp.setValue(this.initialBossHp);
 
-        long calculatedPp = user.getPp();
+        long calculatedPp = user.getTotalPp();
         _userPp.setValue(calculatedPp);
 
-        _hitChance.setValue(user.getLastStageHitChance());
-        _attacksRemaining.setValue(5);
+        int baseHitChance = user.getLastStageHitChance();
+        int bonusHitChance = (int) (user.getTotalAttackChanceBonus() * 100);
+        _hitChance.setValue(baseHitChance + bonusHitChance);
+        int maxAttacks = 5 + user.getTotalExtraAttacks();
+        _attacksRemaining.setValue(maxAttacks);
+        _maxAttacks.setValue(maxAttacks);
     }
 
     public void performAttack() {
@@ -198,8 +205,8 @@ public class BossFightViewModel extends AndroidViewModel {
             allItems = new ArrayList<>();
         }
 
-        BattleRewards rewards = calculateRewardsUseCase.execute(currentBoss, initialBossHp, remainingHp, allItems);
 
+        BattleRewards rewards = calculateRewardsUseCase.execute(currentBoss, initialBossHp, remainingHp, allItems, currentUser);
         if (rewards.getCoinsAwarded() > 0) {
             profileRepository.addCoins(rewards.getCoinsAwarded());
         }
@@ -218,6 +225,7 @@ public class BossFightViewModel extends AndroidViewModel {
             profileRepository.updateUserAfterBossVictory(currentBoss.getLevel());
         }
 
+        updateEquipmentAfterBattle();
         _battleRewardsEvent.setValue(new Event<>(rewards));
         _isBattleOver.setValue(true);
         profileRepository.recordBossFightAttempt(currentBoss.getLevel() + 1);
@@ -227,5 +235,53 @@ public class BossFightViewModel extends AndroidViewModel {
         _boss.setValue(null);
         _isBattleOver.setValue(false);
         _potentialRewards.setValue(null);
+    }
+    private void updateEquipmentAfterBattle() {
+        List<UserEquipment> activeInventory = userInventory.getValue();
+        List<EquipmentItem> allItemsDefinitions = allEquipmentItems.getValue();
+
+        if (activeInventory == null || activeInventory.isEmpty() || allItemsDefinitions == null) {
+            Log.d(TAG, "No active equipment to update after battle.");
+            return;
+        }
+
+        Log.d(TAG, "Updating durability of active equipment after battle...");
+
+        Map<String, EquipmentItem> definitionsMap = allItemsDefinitions.stream()
+                .collect(Collectors.toMap(EquipmentItem::getId, item -> item));
+
+        for (UserEquipment equipment : activeInventory) {
+            if (!equipment.isActive()) continue;
+
+            EquipmentItem definition = definitionsMap.get(equipment.getEquipmentId());
+            if (definition == null) continue;
+
+            if (definition.getType() == EquipmentType.POTION) {
+                Potion potionDef = (Potion) definition;
+                if (!potionDef.isPermanent()) {
+                    Log.d(TAG, "Consumed single-use potion: " + definition.getName());
+                    equipmentRepository.deleteUserEquipment(equipment.getId(), success -> {
+                        if (success) Log.d(TAG, "Successfully deleted potion from inventory.");
+                    });
+                }
+            }
+            else if (definition.getType() == EquipmentType.CLOTHING) {
+                int remaining = equipment.getBattlesRemaining() - 1;
+                equipment.setBattlesRemaining(remaining);
+
+                if (remaining <= 0) {
+                    Log.d(TAG, "Clothing item durability depleted: " + definition.getName());
+                    equipmentRepository.deleteUserEquipment(equipment.getId(), success -> {
+                        if (success) Log.d(TAG, "Successfully deleted clothing from inventory.");
+                    });
+                }
+                else {
+                    Log.d(TAG, "Updating clothing durability for " + definition.getName() + ". Remaining: " + remaining);
+                    equipmentRepository.updateUserEquipment(equipment, success -> {
+                        if (success) Log.d(TAG, "Successfully updated clothing durability.");
+                    });
+                }
+            }
+        }
     }
 }

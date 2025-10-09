@@ -148,7 +148,7 @@ public class MyFriendsFragment extends Fragment {
 
                     boolean isLeader = alliance.getLeaderId().equals(currentUser.getId());
                     boolean isMissionActive = alliance.getActiveMissionId() != null;
-
+                    binding.buttonInviteFriends.setVisibility(isLeader ? View.VISIBLE : View.GONE);
                     binding.buttonStartSpecialMission.setVisibility(isLeader && !isMissionActive ? View.VISIBLE : View.GONE);
                     binding.buttonViewSpecialMission.setVisibility(isMissionActive ? View.VISIBLE : View.GONE);
 

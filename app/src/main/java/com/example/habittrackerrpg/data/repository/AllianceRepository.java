@@ -298,8 +298,28 @@ public class AllianceRepository {
                 .addOnSuccessListener(documentReference -> {
                     Log.d(TAG, "Message sent successfully!");
 
-                    logMissionAction("ALLIANCE_MESSAGE", 4);
+                    db.collection("alliances").document(allianceId).get().addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            Alliance alliance = documentSnapshot.toObject(Alliance.class);
+                            if (alliance == null) return;
 
+                            String senderId = message.getSenderId();
+                            String senderUsername = message.getSenderUsername();
+                            String allianceName = alliance.getName();
+
+                            String notificationTitle = "New message in " + allianceName;
+                            String notificationMessage = senderUsername + ": " + message.getText();
+
+                            for (String memberId : alliance.getMembers().keySet()) {
+                                if (!memberId.equals(senderId)) {
+                                    NotificationSender.sendSimpleNotification(context, memberId, notificationTitle, notificationMessage);
+                                }
+                            }
+                        }
+                    });
+
+
+                    logMissionAction("ALLIANCE_MESSAGE", 4);
                 })
                 .addOnFailureListener(e -> Log.e(TAG, "Error sending message", e));
     }

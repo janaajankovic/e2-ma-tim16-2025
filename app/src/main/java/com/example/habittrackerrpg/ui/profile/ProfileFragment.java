@@ -199,7 +199,7 @@ public class ProfileFragment extends Fragment {
             binding.textViewEquipmentTitle.setVisibility(View.VISIBLE);
             binding.recyclerViewInventory.setVisibility(View.VISIBLE);
 
-            binding.textViewPp.setText(getString(R.string.pp_text, user.getPp()));
+            binding.textViewPp.setText(getString(R.string.pp_text, user.getTotalPp()));
             binding.textViewCoins.setText(getString(R.string.coins_text, user.getCoins()));
 
         } else {
