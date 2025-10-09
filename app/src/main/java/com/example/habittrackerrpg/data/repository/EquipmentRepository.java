@@ -272,4 +272,15 @@ public class EquipmentRepository {
 
         return allItemsLiveData;
     }
+
+    public void addEquipmentToInventory(UserEquipment item) {
+        if (item.getUserId() == null) {
+            Log.e(TAG, "Cannot add equipment, user ID is null.");
+            return;
+        }
+        db.collection("users").document(item.getUserId()).collection("inventory")
+                .add(item)
+                .addOnSuccessListener(docRef -> Log.d(TAG, "Equipment reward successfully added to inventory."))
+                .addOnFailureListener(e -> Log.e(TAG, "Error adding equipment reward to inventory.", e));
+    }
 }

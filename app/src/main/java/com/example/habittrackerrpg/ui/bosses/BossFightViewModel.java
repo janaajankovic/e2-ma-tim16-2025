@@ -18,6 +18,7 @@ import com.example.habittrackerrpg.data.model.Task;
 import com.example.habittrackerrpg.data.model.TaskInstance;
 import com.example.habittrackerrpg.data.model.User;
 import com.example.habittrackerrpg.data.model.UserEquipment;
+import com.example.habittrackerrpg.data.model.Weapon;
 import com.example.habittrackerrpg.data.repository.AllianceRepository;
 import com.example.habittrackerrpg.data.repository.BossRepository;
 import com.example.habittrackerrpg.data.repository.EquipmentRepository;
@@ -36,6 +37,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -185,18 +187,37 @@ public class BossFightViewModel extends AndroidViewModel {
     }
 
     private void finishBattle() {
+        Boolean isOver = _isBattleOver.getValue();
+        if (isOver != null && isOver) {
+            return;
+        }
+
         long remainingHp = _currentBossHp.getValue();
         List<EquipmentItem> allItems = allEquipmentShopItems.getValue();
         if (allItems == null) {
             allItems = new ArrayList<>();
         }
+
         BattleRewards rewards = calculateRewardsUseCase.execute(currentBoss, initialBossHp, remainingHp, allItems);
+
         if (rewards.getCoinsAwarded() > 0) {
             profileRepository.addCoins(rewards.getCoinsAwarded());
         }
+
+        EquipmentItem wonItem = rewards.getEquipmentAwarded();
+        if (wonItem != null && currentUser != null) {
+            UserEquipment newInventoryItem = new UserEquipment(
+                    currentUser.getId(),
+                    wonItem.getId(),
+                    wonItem.getType()
+            );
+            equipmentRepository.addEquipmentToInventory(newInventoryItem);
+        }
+
         if (remainingHp <= 0) {
             profileRepository.updateUserAfterBossVictory(currentBoss.getLevel());
         }
+
         _battleRewardsEvent.setValue(new Event<>(rewards));
         _isBattleOver.setValue(true);
         profileRepository.recordBossFightAttempt(currentBoss.getLevel() + 1);

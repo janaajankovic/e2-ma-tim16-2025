@@ -88,9 +88,12 @@ public class CreateTaskFragment extends Fragment {
 
                 textViewToUpdate.setText(dateTimeFormat.format(calendar.getTime()));
             }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true); // true za 24h format
+
             timePickerDialog.show();
 
         }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+        datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
+
         datePickerDialog.show();
     }
 

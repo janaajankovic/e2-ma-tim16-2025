@@ -137,6 +137,17 @@ public class TaskViewModel extends AndroidViewModel {
     }
 
     public void updateTaskStatus(Task task, TaskStatus newStatus, Date occurrenceDate) {
+        if (newStatus == TaskStatus.COMPLETED) {
+            Date dateToCheck = task.isRecurring() ? occurrenceDate : task.getDueDate();
+
+            Date now = new Date();
+
+            if (dateToCheck != null && dateToCheck.after(now)) {
+                toastMessage.setValue(new Event<>("Cannot complete a task set for the future."));
+                return;
+            }
+        }
+
         if (task.isRecurring()) {
             if (newStatus == TaskStatus.PAUSED || newStatus == TaskStatus.ACTIVE) {
                 Task ruleToUpdate = new Task(task);
